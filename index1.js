@@ -47,5 +47,19 @@ function main() {
     if (!vertexShader || !fragmentShader) return;
     const program = createprogram(gl, vertexShader, fragmentShader);
     if (!program) return;
-        
+    
+    /*====== Connect the attributes with the vertex shader ======*/
+    // Bind the position buffer BEFORE the position pointer
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    const positionAttributeLocation = gl.getAttribLocation(program, "aPosition");
+    gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    // Bind the color buffer BEFORE the color pointer
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+    const colorAttributeLocation = gl.getAttribLocation(program, "aVertexColor");
+    gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(colorAttributeLocation);
+
+    /*========== Drawing ==========*/
+    
 }
