@@ -61,5 +61,54 @@ function main() {
     gl.enableVertexAttribArray(colorAttributeLocation);
 
     /*========== Drawing ==========*/
+    const MODE_NAMES = {
+        [gl.TRIANGLES]: "Triangles",
+        [gl.LINE_LOOP]: "Line Loop",
+        [gl.LINES]: "Lines",
+        [gl.LINE_STRIP]: "Line Strip",
+        [gl.POINTS]: "Points",
+        [gl.TRIANGLE_STRIP]: "Triangle Strip",
+    };
+    const KEY_TO_MODE = {
+        "1": gl.TRIANGLES,
+        "2": gl.LINE_LOOP,
+        "3": gl.LINES,
+        "4": gl.LINE_STRIP,
+        "5": gl.POINTS,
+        "6": gl.TRIANGLE_STRIP,
+    };
+
+    const state = { mode: gl.TRIANGLES, depth: true, cubeFirst: "true" };
+    const status = document.querySelector("#status");
+
+    function drawCube() {
+        gl.drawnArrays(state.mode, 0, cubeCount);
+    }
+    function drawSolid() {
+        gl.drawArrays(state.mode, cubeCount, solidCount);
+    }
+    function render() {
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearDepth(1.0);
+        if (state.depth) {
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
+        } else {
+            gl.disable(gl.DEPTH_TEST);
+        }
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        if (state.cubeFirst === "true") {
+            drawCube();
+            drawSolid();
+        } else {
+            drawSolid();
+            drawCube();
+        }
+        status.textContent = 
+         `${STUDENT_ID} | Mode: ${MODE_NAMES[state.mode]}` +
+      ` | Depth: ${state.depth ? "ON" : "OFF"}` +
+      ` | Order: ${state.cubeFirst ? "Cube First" : "Octahedron First"}`;
+    }
     
-}
+}    
