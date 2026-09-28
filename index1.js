@@ -124,3 +124,21 @@ function main() {
     render();
 }    
 /*========== Geometry helpers ==========*/
+// Depth illusion rule: x_draw = x + o_x * (z + 0.5), y_draw = y + o_y * (z + 0.5)
+function applyOffset(positions, offsetX, offsetY) {
+    const k=p[2]+0.5;
+    return [p[0]+offsetX*k, p[1]+offsetY*k, p[2]];
+}
+// Flat colour repeated for n vertices
+function repeatColor(rgba, n) {
+    let out =[];
+    for (let i=0; i<n; i++) out=out.concat(rgba);
+    return out;
+}
+function buildCube() {
+    const L = -0.8, R = -0.3, B = -0.25, T = 0.25, F = -0.5, K = 0.5;
+    const c = {
+        fbl: [L, B, F], fbr: [R, B, F], ftr: [R, T, F], ftl: [L, T, F],
+        kbl: [L, B, K], kbr: [R, B, K], ktr: [R, T, K], ktl: [L, T, K],
+    };
+    
