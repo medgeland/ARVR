@@ -24,4 +24,28 @@ function main() {
 
     console.assert(colors.length===totalCount*4, "Colour array must have exactly 4 values per vertex", colors.length, totalCount);
     const buffers = initBuffers(gl, positions, colors);
+
+    /*========== Shaders ==========*/
+    const vsSource =
+        attribute vec4 aVertexPosition;
+        attribute vec4 aVertexColor;
+        varying lowp vec4 vColor;
+        void main() {
+            gl_Position = aPosition;
+            gl_PointSize = 6.0;
+            vColor = aVertexColor;
+        }
+    ;
+    const fsSource =
+        varying lowp vec4 vColor;
+        void main() {
+            gl_FragColor = vColor;
+        }
+    ;
+    const vertexShader = createshader(gl, gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = createshader(gl, gl.FRAGMENT_SHADER, fsSource);
+    if (!vertexShader || !fragmentShader) return;
+    const program = createprogram(gl, vertexShader, fragmentShader);
+    if (!program) return;
+        
 }
