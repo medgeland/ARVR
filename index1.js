@@ -168,7 +168,16 @@ function buildCube() {
         for (const p of [a,b,cc,d]) 
             positions = positions.concat(applyOffset(p));
         if (face.name === "front") {
-
+if (face.name === "front") {
+    const [ca, cb, cc2, cd] = frontCorners;
+    colors = colors.concat(ca, cb, cc2, ca, cc2, cd);
+} 
+else {
+    colors = colors.concat(repeatColor(flat[face.name], 6));
+}
+}
+return { positions, colors };
+}
 
 }
      
