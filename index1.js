@@ -141,4 +141,34 @@ function buildCube() {
         fbl: [L, B, F], fbr: [R, B, F], ftr: [R, T, F], ftl: [L, T, F],
         kbl: [L, B, K], kbr: [R, B, K], ktr: [R, T, K], ktl: [L, T, K],
     };
-    
+    const faces = [
+        { name: "front",  q: [c.fbl, c.fbr, c.ftr, c.ftl] },
+        { name: "back",   q: [c.kbl, c.kbr, c.ktr, c.ktl] },
+        { name: "top",    q: [c.ftl, c.ftr, c.ktr, c.ktl] },
+        { name: "bottom", q: [c.fbl, c.fbr, c.kbr, c.kbl] },
+        { name: "left",   q: [c.fbl, c.ftl, c.ktl, c.kbl] },
+        { name: "right",  q: [c.fbr, c.ftr, c.ktr, c.kbr] },
+    ];
+    const flat = {
+        back:   [0.5, 0.5, 0.5, 1.0],
+        top:    [0.0, 0.8, 0.8, 1.0],
+        bottom: [1.0, 0.5, 0.0, 1.0],
+        left:   [0.7, 0.0, 0.9, 1.0],
+        right:  [0.2, 0.6, 0.2, 1.0],
+    };
+    const frontCorners = [
+        [1.0, 0.0, 0.0, 1.0], 
+        [1.0, 1.0, 0.0, 1.0], 
+        [0.0, 0.3, 1.0, 1.0], 
+        [1.0, 1.0, 1.0, 1.0],
+    ];
+    let positions = [], colors = [];
+    for (const face of faces) {
+        const [a,b,cc,d]= face.q;
+        for (const p of [a,b,cc,d]) 
+            positions = positions.concat(applyOffset(p));
+        if (face.name === "front") {
+
+
+}
+     
