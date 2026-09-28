@@ -110,5 +110,17 @@ function main() {
       ` | Depth: ${state.depth ? "ON" : "OFF"}` +
       ` | Order: ${state.cubeFirst ? "Cube First" : "Octahedron First"}`;
     }
-    
+    document.addEventListener("keydown", (event) => {
+        const key = event.key;
+        if (key in KEY_TO_MODE) {
+            state.mode = KEY_TO_MODE[key];
+        } else if (key === "D") {
+            state.depth = !state.depth;
+        } else if (key === "S") {
+            state.cubeFirst = !state.cubeFirst;
+        }
+        render();
+    });
+    render();
 }    
+/*========== Geometry helpers ==========*/
