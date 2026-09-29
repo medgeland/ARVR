@@ -88,7 +88,6 @@ function main() {
         gl.drawArrays(state.mode, cubeCount, solidCount);
     }
     function render() {
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
         if (state.depth) {
@@ -179,5 +178,20 @@ else {
 return { positions, colors };
 }
 
+function buildOctahedron() {
+    const cx=0.5, cy=0.0, r=0.3;
+    const px=[cx+r, cy, 0.0];
+    const nx=[cx-r, cy, 0.0];
+    const py=[cx, cy+r, 0.0];
+    const ny=[cx, cy-r, 0.0];
+    const pz=[cx, cy, 0.5];
+    const nz=[cx, cy, -0.5];
+    const faces = [
+        [nx, px, py], [nz, py, nx], [nz, nx, ny], [nz, ny, px],
+        [pz, px, py], [pz, py, nx], [pz, nx, ny], [pz, ny, px]
+    ];
+    const faceColors = [
+        [nz, px, py], [nz, py, nx], [pz, nx, ny], [pz, ny, px]
+    ];
 }
      
