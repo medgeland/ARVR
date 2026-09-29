@@ -110,7 +110,7 @@ function main() {
       ` | Order: ${state.cubeFirst ? "Cube First" : "Octahedron First"}`;
     }
     document.addEventListener("keydown", (event) => {
-        const key = event.key;
+        const key = event.key.toUpperCase();
         if (key in KEY_TO_MODE) {
             state.mode = KEY_TO_MODE[key];
         } else if (key === "D") {
@@ -118,6 +118,7 @@ function main() {
         } else if (key === "S") {
             state.cubeFirst = !state.cubeFirst;
         }
+        else { return; }
         render();
     });
     render();
