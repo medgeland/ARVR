@@ -27,7 +27,7 @@ function main() {
 
     /*========== Shaders ==========*/
     const vsSource = `
-        attribute vec4 aPosition;;
+        attribute vec4 aPosition;
         attribute vec4 aVertexColor;
         varying lowp vec4 vColor;
         void main() {
@@ -127,7 +127,7 @@ function main() {
 // Depth illusion rule: x_draw = x + o_x * (z + 0.5), y_draw = y + o_y * (z + 0.5)
 function applyOffset(p) {
     const k=p[2]+0.5;
-    return [p[0]+offset_X*k, p[1]+offset_Y*k, p[2]];
+    return [p[0] + OFFSET_X*k, p[1] + OFFSET_Y*k, p[2]];
 }
 // Flat colour repeated for n vertices
 function repeatColor(rgba, n) {
