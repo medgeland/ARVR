@@ -26,21 +26,21 @@ function main() {
     const buffers = initBuffers(gl, positions, colors);
 
     /*========== Shaders ==========*/
-    const vsSource =
-        attribute vec4 aVertexPosition;
+    const vsSource = `
+        attribute vec4 aPosition;;
         attribute vec4 aVertexColor;
         varying lowp vec4 vColor;
         void main() {
             gl_Position = aPosition;
             gl_PointSize = 6.0;
             vColor = aVertexColor;
-        }
+        }`
     ;
-    const fsSource =
+    const fsSource =`
         varying lowp vec4 vColor;
         void main() {
             gl_FragColor = vColor;
-        }
+        }`
     ;
     const vertexShader = createshader(gl, gl.VERTEX_SHADER, vsSource);
     const fragmentShader = createshader(gl, gl.FRAGMENT_SHADER, fsSource);
@@ -82,7 +82,7 @@ function main() {
     const status = document.querySelector("#status");
 
     function drawCube() {
-        gl.drawnArrays(state.mode, 0, cubeCount);
+        gl.drawArrays(state.mode, 0, cubeCount);
     }
     function drawSolid() {
         gl.drawArrays(state.mode, cubeCount, solidCount);
@@ -124,9 +124,9 @@ function main() {
 }    
 /*========== Geometry helpers ==========*/
 // Depth illusion rule: x_draw = x + o_x * (z + 0.5), y_draw = y + o_y * (z + 0.5)
-function applyOffset(positions, offsetX, offsetY) {
+function applyOffset(p) {
     const k=p[2]+0.5;
-    return [p[0]+offsetX*k, p[1]+offsetY*k, p[2]];
+    return [p[0]+offset_X*k, p[1]+offset_Y*k, p[2]];
 }
 // Flat colour repeated for n vertices
 function repeatColor(rgba, n) {
@@ -164,9 +164,8 @@ function buildCube() {
     let positions = [], colors = [];
     for (const face of faces) {
         const [a,b,cc,d]= face.q;
-        for (const p of [a,b,cc,d]) 
+        for (const p of [a, b, cc, a, cc, d]) 
             positions = positions.concat(applyOffset(p));
-        if (face.name === "front") {
 if (face.name === "front") {
     const [ca, cb, cc2, cd] = frontCorners;
     colors = colors.concat(ca, cb, cc2, ca, cc2, cd);
@@ -187,7 +186,7 @@ function buildOctahedron() {
     const pz=[cx, cy, 0.5];
     const nz=[cx, cy, -0.5];
     const faces = [
-        [nx, px, py], [nz, py, nx], [nz, nx, ny], [nz, ny, px],
+        [nz, px, py], [nz, py, nx], [nz, nx, ny], [nz, ny, px],
         [pz, px, py], [pz, py, nx], [pz, nx, ny], [pz, ny, px]
     ];
     const faceColors = [
@@ -209,7 +208,7 @@ function buildOctahedron() {
     let positions = [];
     let colors=[];
     faces.forEach((tri, i)=>{
-        for (const p or tri) positions=positions.concat(applyOffcet(p));
+        for (const p of tri) positions=positions.concat(applyOffset(p));
         colors=colors.concat(faceColors[i] ? repeatColor (faceColors[i], 3) : gradient.flat());
     });
     return { positions, colors };
@@ -252,6 +251,6 @@ function initBuffers(gl, positions, colors) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
     console.log("Colour buffer size (bytes):",
         gl.getBufferParameter(gl.ARRAY_BUFFER, gl.BUFFER_SIZE));
-    return { position, color };
-    }
+    return { position: positionBuffer, color };
+}
     window.addEventListener("load", main);
