@@ -78,7 +78,7 @@ function main() {
         "6": gl.TRIANGLE_STRIP,
     };
 
-    const state = { mode: gl.TRIANGLES, depth: true, cubeFirst: "true" };
+    const state = { mode: gl.TRIANGLES, depth: true, cubeFirst: true };
     const status = document.querySelector("#status");
 
     function drawCube() {
@@ -97,7 +97,7 @@ function main() {
             gl.disable(gl.DEPTH_TEST);
         }
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        if (state.cubeFirst === "true") {
+        if (state.cubeFirst) {
             drawCube();
             drawSolid();
         } else {
