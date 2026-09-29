@@ -240,3 +240,18 @@ function createprogram(gl, vertexShader, fragmentShader) {
     gl.useProgram(program);
     return program;
 }
+function initBuffers(gl, positions, colors) {
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    console.log("Position buffer size (bytes):", positions.length * 4);
+    gl.getBufferParameter(gl.ARRAY_BUFFER, gl.BUFFER_SIZE);
+
+    const color=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, color);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    console.log("Colour buffer size (bytes):",
+        gl.getBufferParameter(gl.ARRAY_BUFFER, gl.BUFFER_SIZE));
+    return { position, color };
+    }
+    window.addEventListener("load", main);
