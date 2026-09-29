@@ -191,7 +191,27 @@ function buildOctahedron() {
         [pz, px, py], [pz, py, nx], [pz, nx, ny], [pz, ny, px]
     ];
     const faceColors = [
-        [nz, px, py], [nz, py, nx], [pz, nx, ny], [pz, ny, px]
+        null,
+        [0.9, 0.1, 0.1, 1.0],
+        [0.1, 0.4, 1.0, 1.0],
+        [0.1, 0.8, 0.2, 1.0],
+        [1.0, 0.6, 0.8, 1.0],
+        [0.6, 0.4, 0.2, 1.0],
+        [0.0, 0.7, 0.7, 1.0],
+        [0.8, 0.8, 0.8, 1.0],
     ];
+    const gradient = [
+        [1.0, 1.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0, 1.0],
+    ];
+
+    let positions = [];
+    let colors=[];
+    faces.forEach((tri, i)=>{
+        for (const p or tri) positions=positions.concat(applyOffcet(p));
+        colors=colors.concat(faceColors[i] ? repeatColor (faceColors[i], 3) : gradient.flat());
+    });
+    return { positions, colors };
 }
      
