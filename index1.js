@@ -42,10 +42,10 @@ function main() {
             gl_FragColor = vColor;
         }`
     ;
-    const vertexShader = createshader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = createshader(gl, gl.FRAGMENT_SHADER, fsSource);
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
     if (!vertexShader || !fragmentShader) return;
-    const program = createprogram(gl, vertexShader, fragmentShader);
+    const program = createProgram(gl, vertexShader, fragmentShader);
     if (!program) return;
     
     /*====== Connect the attributes with the vertex shader ======*/
@@ -215,7 +215,7 @@ function buildOctahedron() {
     return { positions, colors };
 }
 /*========== WebGL helpers ==========*/
-function createshader(gl, type, source) {
+function createShader(gl, type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -227,7 +227,7 @@ function createshader(gl, type, source) {
     return shader;
 }
 
-function createprogram(gl, vertexShader, fragmentShader) {
+function createProgram(gl, vertexShader, fragmentShader) {
     const program = gl.createProgram();
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
