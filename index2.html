@@ -1,0 +1,37 @@
+##PA2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PA1 - 3D Shapes in WebGL - 240137</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background-color: #222;
+        }
+        canvas {
+            width: min(100vw; 100wh);
+            aspect-ratio: 1;
+            display: block;
+            box-sizing: border-box;
+            padding: 4px;
+            border: 1px solid #fff;
+        }
+        #status {
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            color: #fff;
+            font-family: monospace;
+            background: rgba(0,0,0,0.6);
+        }
+    </style>
+
+</head>
+<body>
+    <canvas id="c" width="900" height="900"></canvas>
