@@ -71,6 +71,14 @@ function main() {
     if (!program) return;
 
     /*====== Connect the attributes with the vertex shader ======*/
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    const aPosition=gl.getAttribLocation(program, "aPosition");
+    gl.vertexAttribPointer(positionAttributeLocation, 3, gl.Float, false, 0,0);
+    gl.enableVertexAttribArray(aPosition);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+    const colorAttributeLocation=gl.getAttribLocation(program, "aVertexColor");
+    gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(colorAttributeLocation);
     
 
 
