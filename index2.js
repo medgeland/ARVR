@@ -28,7 +28,7 @@ const ORTHO_HALF_HEIGHT=vec3.length(EYE_START)*Math.tan((FOV_START*Math.PI/180)/
 function main() {
     /*========== Create a WebGL Context ==========*/
     const canvas=document.querySelector("#c");
-    const gl=canvas.getContext("webgl2");
+    const gl=canvas.getContext("webgl");
     if(!gl){
         console.log("WebGL 2 not supported");
         return;
@@ -61,7 +61,7 @@ function main() {
 
     const fsSource= `
             varying lowp vec4 vColor;
-            void main();
+            void main() {
                 gl_FragColor = vColor;
         }`;
     const vertexShader=createShader(gl, gl.VERTEX_SHADER, vsSource);
@@ -72,9 +72,9 @@ function main() {
 
     /*====== Connect the attributes with the vertex shader ======*/
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-    const aPosition=gl.getAttribLocation(program, "aPosition");
+    const positionAttributeLocation = gl.getAttribLocation(program, "aPosition");
     gl.vertexAttribPointer(positionAttributeLocation, 3, gl.Float, false, 0,0);
-    gl.enableVertexAttribArray(aPosition);
+    gl.enableVertexAttribArray(positionAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
     const colorAttributeLocation=gl.getAttribLocation(program, "aVertexColor");
     gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
