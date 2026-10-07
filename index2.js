@@ -23,4 +23,6 @@ const FOV_START=45;
 const NEAR=1.0;
 const FAR=20.0;
 
+//Orthographic half-height =visible half-height of the perspective view at target distance
+const ORTHO_HALF_HEIGHT=vec3.length(EYE_START)*Math.tan((FOV_START*Math.PI/180)/2);
 
