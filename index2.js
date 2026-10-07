@@ -25,4 +25,25 @@ const FAR=20.0;
 
 //Orthographic half-height =visible half-height of the perspective view at target distance
 const ORTHO_HALF_HEIGHT=vec3.length(EYE_START)*Math.tan((FOV_START*Math.PI/180)/2);
+function main() {
+    /*========== Create a WebGL Context ==========*/
+    const canvas=document.querySelector("#c");
+    const gl=canvas.getContext("webgl2");
+    if(!gl){
+        console.log("WebGL 2 not supported");
+        return;
+    }
+
+    /*========== Define and Store the Geometry ==========*/
+    const cube=buildCube();
+    const solid=buildOctahedron();
+    const positions=cube.positions.concat(solid.positions);
+    const colors=cube.colors.concat(solid.colors);
+    const cubecount=cube.positions.length/3;
+    const solidcount=solid.positions.length/3;
+    const totalcount=cubecount+solidcount;
+
+    console.assert(colors.length===totalcount*4, "Color array must have exactly 4 values per vertex", colors.length, totalcount);
+    const buffers=initBuffers(gl, positions, colors);
+    
 
