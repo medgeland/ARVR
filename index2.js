@@ -207,4 +207,54 @@ function solidModelMatrix(t) {
     return m;
 }
 
+/*========== Geometry helpers ==========*/
+function repeatColor(rgba, n) {
+    let out = [];
+    for (let i = 0; i < n; i++) out = out.concat(rgba);
+    return out;
+}
+
+function buildCube() {
+    const L = -0.5, R = 0.5, B = -0.5, T = 0.5, F = 0.5, K = -0.5;
+    const c = {
+        fbl: [L, B, F], fbr: [R, B, F], ftr: [R, T, F], ftl: [L, T, F],
+        kbl: [L, B, K], kbr: [R, B, K], ktr: [R, T, K], ktl: [L, T, K],
+    };
+    const faces = [
+        { name: "front",  q: [c.fbl, c.fbr, c.ftr, c.ftl] },
+        { name: "back",   q: [c.kbl, c.kbr, c.ktr, c.ktl] },
+        { name: "top",    q: [c.ftl, c.ftr, c.ktr, c.ktl] },
+        { name: "bottom", q: [c.fbl, c.fbr, c.kbr, c.kbl] },
+        { name: "left",   q: [c.fbl, c.ftl, c.ktl, c.kbl] },
+        { name: "right",  q: [c.fbr, c.ftr, c.ktr, c.kbr] },
+    ];
+    const flat = {
+        back:   [0.3, 0.5, 0.5, 1.0],
+        top:    [0.0, 0.8, 0.8, 1.0],
+        bottom: [1.0, 0.5, 1.0, 1.0],
+        left:   [0.7, 0.1, 0.9, 1.0],
+        right:  [0.2, 0.6, 0.2, 1.0],
+    };
+    const frontCorners = [
+        [0.7, 1.0, 0.0, 1.0],
+        [0.5, 1.0, 0.7, 1.0],
+        [0.2, 0.3, 1.0, 1.0],
+        [1.0, 0.2, 0.2, 1.0],
+    ];
+    let positions = [], colors = [];
+    for (const face of faces) {
+        const [a, b, cc, d] = face.q;
+        for (const p of [a, b, cc, a, cc, d]) positions = positions.concat(p);
+        if (face.name === "front") {
+            const [ca, cb, cc2, cd] = frontCorners;
+            colors = colors.concat(ca, cb, cc2, ca, cc2, cd);
+        } else {
+            colors = colors.concat(repeatColor(flat[face.name], 6));
+        }
+    }
+    return { positions, colors };
+}
+
+
+
 
