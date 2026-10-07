@@ -1,4 +1,16 @@
 //PA2 - Matrix Transformations and Perspective - 240137
 //Variant:
 // Last ID digit 7 -> octahedron, orbit period 7+6=13 seconds
-//
+// Second-to last ID digit 3 -> 3mod 3 = 0-> cube spins around x-axis
+// Third-to-last ID digit 1 -> 1mod 3 = 1-> vertical orbit (around x-axis)
+//4th-to-last ID digit 0 -> 0mod 2= 0 -> camera eye (0, 2.5, 7), FOV 45 degrees
+
+const STUDENT_ID = 240137;
+
+//Motion parameters
+const CUBE_SPIN_SPEED=1.2 //radians per sec
+const CUBE_SPIN_AXIS=[1,0,0] //x-axis
+const ORBIT_RADIUS=2.5
+const ORBIT_PERIOD=13 
+const ORBIT_AXIS=[1,0,0] //x-axis
+const SELF_SPIN_SPEED=2.0
