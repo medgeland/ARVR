@@ -86,7 +86,7 @@ function main() {
     const projectionMatrixLocation=gl.getUniformLocation(program, "uProjectionMatrix");
 
     /*====== Fixed render state (once) ======*/
-    get.clearColor(0.0,0.0,0.0,1.0);
+    gl.clearColor(0.0,0.0,0.0,1.0);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
