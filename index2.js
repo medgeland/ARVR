@@ -5,7 +5,7 @@
 // Third-to-last ID digit 1 -> 1mod 3 = 1-> vertical orbit (around x-axis)
 //4th-to-last ID digit 0 -> 0mod 2= 0 -> camera eye (0, 2.5, 7), FOV 45 degrees
 
-const STUDENT_ID = 240137;
+const STUDENT_ID = "240137";
 
 //Motion parameters
 const CUBE_SPIN_SPEED=1.2; //radians per sec
