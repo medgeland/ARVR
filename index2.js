@@ -189,6 +189,22 @@ function main() {
     requestAnimationFrame(render);
 }
 
+/*========== Model matrices ==========*/
+function cubeModelMatrix(t) {
+    const m = mat4.create();
+    mat4.rotate(m, m, CUBE_SPIN_SPEED * t, CUBE_SPIN_AXIS);   // spin in place around x
+    return m;
+}
+function solidModelMatrix(t) {
+    const orbitAngle = 2 * Math.PI * t / ORBIT_PERIOD;
+    const s = 0.65 + 0.15 * Math.sin(2 * Math.PI * t / 3);
+    const m = mat4.create();
 
+    mat4.rotate(m, m, orbitAngle, ORBIT_AXIS);
+    mat4.translate(m, m, [0, 0, ORBIT_RADIUS]);
+    mat4.rotate(m, m, SELF_SPIN_SPEED * t, [0, 1, 0]);
+    mat4.scale(m, m, [s, s, s]);
+    return m;
+}
 
 
