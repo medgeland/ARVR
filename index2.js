@@ -131,7 +131,36 @@ function main() {
                 break;
         }
     }};
-    
+
+    /*========== Drawing (every frame) ==========*/
+    let then = 0;
+    let fpsFrames = 0;
+    let fpsTime = 0;
+    let fps = 0;
+    function render(now) {
+        now *= 0.001;
+        const rawDt = now - then;
+        const dt = Math.min(rawDt, 0.1);
+        then = now;
+        if (!state.paused) state.t += dt;
+
+        // fps averaged over the last second
+        fpsFrames++;
+        fpsTime += rawDt;
+        if (fpsTime >= 1.0) {
+            fps = fpsFrames / fpsTime;
+            fpsFrames = 0;
+            fpsTime = 0;
+        }
+
+        //Projection
+        const projectionMatrix = mat4.create();
+        if (state.ortho) {
+            const h = ORTHO_HALF_HEIGHT;
+            mat4.ortho(projectionMatrix, -h * aspect, h * aspect, -h, h, NEAR, FAR);
+        } else {
+            mat4.perspective(projectionMatrix, state.fovDeg * Math.PI / 180, aspect, NEAR, FAR);
+        }
 
 
 
