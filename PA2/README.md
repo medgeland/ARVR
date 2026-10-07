@@ -12,8 +12,8 @@
 |Fourth-to-last|0|0 mod 2 = 0|Camera eye (0, 2.5, 7), FOV 45°|
 
 ## How to run:
-- Open **VS Code** and start Live Server from index2.html
-- glMatrix 2.8.1 is loaded from cdnjs before index2.js
+- Open **VS Code** and start Live Server from index.html
+- glMatrix 2.8.1 is loaded from cdnjs before index.js
 
 ## Keys:
 |Key|Effect|
