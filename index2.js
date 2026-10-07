@@ -81,8 +81,8 @@ function main() {
     gl.enableVertexAttribArray(colorAttributeLocation);
 
     /*====== Uniform locations (once) ======*/
-    const ModelMatrixLocation=gl.getUniformLocation(program, "uModelMatrix");
-    const ViewMatrixLocation=gl.getUniformLocation(program, "uViewMatrix");
+    const modelMatrixLocation=gl.getUniformLocation(program, "uModelMatrix");
+    const viewMatrixLocation=gl.getUniformLocation(program, "uViewMatrix");
     const projectionMatrixLocation=gl.getUniformLocation(program, "uProjectionMatrix");
 
     /*====== Fixed render state (once) ======*/
