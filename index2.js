@@ -255,6 +255,40 @@ function buildCube() {
     return { positions, colors };
 }
 
+function buildOctahedron() {
+    const r = 0.5;
+    const px = [ r, 0, 0], nx = [-r, 0, 0];
+    const py = [0,  r, 0], ny = [0, -r, 0];
+    const pz = [0, 0,  r], nz = [0, 0, -r];
+    const faces = [
+        [nz, px, py], [nz, py, nx], [nz, nx, ny], [nz, ny, px],
+        [pz, px, py], [pz, py, nx], [pz, nx, ny], [pz, ny, px],
+    ];
+    const faceColors = [
+        null,
+        [0.0, 0.3, 0.9, 1.0],
+        [0.0, 0.7, 0.3, 1.0],
+        [0.5, 0.0, 0.5, 1.0],
+        [1.0, 0.3, 0.3, 1.0],
+        [0.1, 0.9, 0.4, 1.0],
+        [0.0, 0.7, 0.7, 1.0],
+        [0.8, 0.4, 0.8, 1.0],
+    ];
+    const gradient = [
+        [1.0, 1.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0, 1.0],
+    ];
+    let positions = [];
+    let colors = [];
+    faces.forEach((tri, i) => {
+        for (const p of tri) positions = positions.concat(p);
+        colors = colors.concat(faceColors[i] ? repeatColor(faceColors[i], 3) : gradient.flat());
+    });
+    return { positions, colors };
+}
+
+/*========== WebGL helpers (from PA1) ==========*/
 
 
 
