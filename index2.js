@@ -130,7 +130,7 @@ function main() {
                 state.azimuth = 0;
                 break;
         }
-    }};
+    });
 
     /*========== Drawing (every frame) ==========*/
     let then = 0;
