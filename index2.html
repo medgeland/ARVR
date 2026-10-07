@@ -7,20 +7,15 @@
     <title>PA2 - Matrix Transformations and Perspective - 240137</title>
     <link rel="icon" href="data:,">
     <style>
-        body {
+        html, body {
             margin: 0;
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
+            height: 100%;
+            overflow: hidden;
             background-color: #222;
         }
         canvas {
-            width: min(100vw; 100wh);
-            aspect-ratio: 1;
+            width: min(100vw; 100vh);
             display: block;
-            box-sizing: border-box;
-            padding: 4px;
-            border: 1px solid #fff;
         }
         #status {
             position: fixed;
@@ -28,11 +23,16 @@
             left: 8px;
             padding: 4px 8px;
             color: #fff;
-            font-family: monospace;
+            font: 14px monospace;
             background: rgba(0,0,0,0.6);
         }
     </style>
 
 </head>
 <body>
-    <canvas id="c" width="900" height="900"></canvas>
+    <canvas id="c" ></canvas>
+    <div id="status"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+    <script src="index2.js"></script>
+</body>
+</html>
