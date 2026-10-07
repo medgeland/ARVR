@@ -162,5 +162,33 @@ function main() {
             mat4.perspective(projectionMatrix, state.fovDeg * Math.PI / 180, aspect, NEAR, FAR);
         }
 
+        const eye = vec3.create();
+        vec3.rotateY(eye, EYE_START, TARGET, state.azimuth);
+        const viewMatrix = mat4.create();
+        mat4.lookAt(viewMatrix, eye, TARGET, UP);
+        gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+        gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
+ 
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+ 
+        gl.uniformMatrix4fv(modelMatrixLocation, false, cubeModelMatrix(state.t));
+        gl.drawArrays(gl.TRIANGLES, 0, cubeCount);
+ 
+        gl.uniformMatrix4fv(modelMatrixLocation, false, solidModelMatrix(state.t));
+        gl.drawArrays(gl.TRIANGLES, cubeCount, solidCount);
+
+        status.textContent =
+            `${STUDENT_ID} | ${state.ortho ? "Orthographic" : "Perspective"}` +
+            ` | FOV: ${state.fovDeg}°` +
+            ` | t: ${state.t.toFixed(1)} s` +
+            ` | ${fps.toFixed(0)} fps` +
+            (state.paused ? " | PAUSED" : "");
+ 
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+}
+
+
 
 
