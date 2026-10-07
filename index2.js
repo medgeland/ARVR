@@ -41,9 +41,9 @@ function main() {
     const colors=cube.colors.concat(solid.colors);
     const cubeCount=cube.positions.length/3;
     const solidCount=solid.positions.length/3;
-    const totalCount=cubecount+solidcount;
+    const totalCount=cubeCount+solidCount;
 
-    console.assert(colors.length===totalcount*4, "Color array must have exactly 4 values per vertex", colors.length, totalcount);
+    console.assert(colors.length===totalCount*4, "Color array must have exactly 4 values per vertex", colors.length, totalCount);
     const buffers=initBuffers(gl, positions, colors);
 
     /*========== Shaders (once) ==========*/
