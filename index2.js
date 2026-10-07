@@ -79,6 +79,59 @@ function main() {
     const colorAttributeLocation=gl.getAttribLocation(program, "aVertexColor");
     gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(colorAttributeLocation);
+
+    /*====== Uniform locations (once) ======*/
+    const ModelMatrixLocation=gl.getUniformLocation(program, "uModelMatrix");
+    const ViewMatrixLocation=gl.getUniformLocation(program, "uViewMatrix");
+    const projectionMatrixLocation=gl.getUniformLocation(program, "uProjectionMatrix");
+
+    /*====== Fixed render state (once) ======*/
+    get.clearColor(0.0,0.0,0.0,1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+
+    /*========== State ==========*/
+    const state = { t: 0, paused: false, ortho: false, fovDeg: FOV_START, azimuth: 0 };
+    const status = document.querySelector("#status");
+    let aspect = 1;
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(canvas.clientWidth * dpr);
+        canvas.height = Math.round(canvas.clientHeight * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        aspect = canvas.width / canvas.height;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    document.addEventListener("keydown", (event) => {
+        switch (event.key) {
+            case "p": case "P":
+                state.paused = !state.paused;
+                break;
+                case "o": case "O":
+                state.ortho = !state.ortho;
+                break;
+            case "+": case "=":
+                if (!state.ortho) state.fovDeg = Math.max(20, state.fovDeg - 5);
+                break;
+            case "-":
+                if (!state.ortho) state.fovDeg = Math.min(100, state.fovDeg + 5);
+                break;
+            case "ArrowLeft":
+                state.azimuth -= 5 * Math.PI / 180;
+                break;
+            case "ArrowRight":
+                state.azimuth += 5 * Math.PI / 180;
+                break;
+            case "r": case "R":
+                state.t = 0;
+                state.fovDeg = FOV_START;
+                state.azimuth = 0;
+                break;
+        }
+    }};
     
+
 
 
