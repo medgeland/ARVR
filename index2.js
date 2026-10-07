@@ -39,9 +39,9 @@ function main() {
     const solid=buildOctahedron();
     const positions=cube.positions.concat(solid.positions);
     const colors=cube.colors.concat(solid.colors);
-    const cubecount=cube.positions.length/3;
-    const solidcount=solid.positions.length/3;
-    const totalcount=cubecount+solidcount;
+    const cubeCount=cube.positions.length/3;
+    const solidCount=solid.positions.length/3;
+    const totalCount=cubecount+solidcount;
 
     console.assert(colors.length===totalcount*4, "Color array must have exactly 4 values per vertex", colors.length, totalcount);
     const buffers=initBuffers(gl, positions, colors);
