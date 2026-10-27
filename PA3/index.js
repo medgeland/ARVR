@@ -236,10 +236,55 @@ function render(time, frame) {
                 }
             }
         }
-
+        //update overlay
         updateOverlay();
     }
     renderer.render(scene, camera);
 }
 
+function placeProduct(hit, viewerPose) {
+    if (placed.length >= MAX_PRODUCTS) {
+        removeProduct(placed[0]);
+    }
+    const object = buildProduct();
+    const m = reticle.matrix.elements;
+    object.position.set(m[12], m[13], m[14]);
 
+    const cam = viewerPose.transform.position;
+    const yaw = Math.atan2(cam.x - m[12], cam.z - m[14]);
+    object.rotation.set(0, yaw, 0);
+    scene.add(object);
+ 
+    const item = { object: object, anchor: null, yaw: yaw };
+    placed.push(item);
+
+    //keeping product fixed in space
+    if (anchorsOn) {
+        hit.createAnchor()
+            .then((anchor) => {
+                if (placed.includes(item)) {
+                    item.anchor = anchor;
+                } else {
+                    anchor.delete(); // the product was removed before its anchor was ready
+                }
+            })
+            .catch((reason) => {
+                console.warn("anchor not created: " + reason);
+            });
+    }
+}
+
+function removeProduct(item) {
+    if (item.anchor) {
+        item.anchor.delete();
+    }
+    scene.remove(item.object);
+    placed.splice(placed.indexOf(item), 1);
+}
+ 
+function clearProducts() {
+    while (placed.length > 0) {
+        removeProduct(placed[0]);
+    }
+    updateOverlay();
+}
