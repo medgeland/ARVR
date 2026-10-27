@@ -99,3 +99,23 @@ function loadScene() {
     }
     updateOverlay();
 }
+
+function buildProduct() {
+    //bedside table, 0.45*0.4*0.55 , one drawer facing front
+    const product = new THREE.Group();
+    const wood = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+    const drawerWood = new THREE.MeshStandardMaterial({ color: 0xc8a165, roughness: 0.6 });
+    const metal = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.3 });
+
+    //body y 0.08 to 0.55, z -0.2 to 0.17
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.47, 0.37), wood);
+    body.position.set(0, 0.315, -0.015);
+    product.add(body);
+
+    //legs y 0 to 0.08
+    const legPositions = [[-0.19, -0.15], [0.19, -0.15], [-0.19, 0.15], [0.19, 0.15]];
+    for (const [x, z] of legPositions) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.08, 16), wood);
+        leg.position.set(x, 0.04, z);
+        product.add(leg);
+    }
