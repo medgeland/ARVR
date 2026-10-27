@@ -151,7 +151,7 @@ function onRequestSession() {
             sessionState = "not started";
             showFallback("AR session request failed: " + reason);
             updateOverlay();
-        }));
+        });
 }
 function onSessionStarted(session) {
     btn.removeEventListener("click", onRequestSession);
