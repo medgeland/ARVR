@@ -189,3 +189,14 @@ function render(time, frame) {
             });
 
     }
+    
+    //hit results
+    let hit = null;
+    let hitValid = false;
+    reticle.visible = false;
+    reticleState = "none";
+    if (hitTestSource) {
+            const hitTestResults = frame.getHitTestResults(hitTestSource);
+            if (hitTestResults.length > 0) {
+                const hitPose = hitTestResults[0].getPose(localSpace);
+                
