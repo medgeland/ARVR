@@ -119,3 +119,16 @@ function buildProduct() {
         leg.position.set(x, 0.04, z);
         product.add(leg);
     }
+
+    //drawer front
+    const drawer = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.16, 0.015), drawerWood);
+    drawer.position.set(0, 0.44, 0.1775);
+    product.add(drawer);
+
+    //knob reaches z 0.2
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.015, 16, 16), metal);
+    knob.position.set(0, 0.44, 0.185);
+    product.add(knob);
+ 
+    return product;
+}
