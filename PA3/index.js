@@ -6,16 +6,16 @@ const PLACEMENT_MODE = "single";
 const TOLERANCE_DEG = 12;
 const MAX_PRODUCTS = PLACEMENT_MODE === "single" ? 1 : 5;
 
- // global scene values
+ //global scene values
 let btn, gl, glCanvas, camera, scene, renderer, controller, reticle;
 let overlay, statusText, fallbackText, clearBtn;
 
-// global xr values
+//global xr values
 let xrSession = null, hitTestSource = null, hitTestSourceRequested = false;
 let placeRequested = false;
 const placed = [];
 
-// overlay state
+//overlay state
 let sessionState = "not started";
 let reticleState = "none";
 let anchorsOn = false;
@@ -24,11 +24,11 @@ let trackingLost = false;
 loadScene();
 
 function loadScene() {
-    // setup WebGL
+    //setup WebGL
     glCanvas = document.createElement("canvas");
     gl = glCanvas.getContext("webgl2", { antialias: true, xrCompatible: true });
  
-    // setup Three.js scene
+    //setup Three.js scene
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
     scene = new THREE.Scene();
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
@@ -44,3 +44,19 @@ function loadScene() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
+
+    //reticle
+    reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+    );
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+
+
+     //screen tap controller
+    controller = renderer.xr.getController(0);
+    controller.addEventListener("select", onSelect);
+    scene.add(controller);
+
