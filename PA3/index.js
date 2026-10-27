@@ -145,3 +145,11 @@ function onRequestSession() {
         optionalFeatures: ["anchors", "dom-overlay"],
         domOverlay: { root: overlay }
     })
+
+    .then(onSessionStarted)
+        .catch((reason) => {
+            sessionState = "not started";
+            showFallback("AR session request failed: " + reason);
+            updateOverlay();
+        }));
+}
