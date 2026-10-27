@@ -132,3 +132,8 @@ function buildProduct() {
  
     return product;
 }
+
+function onSelect() {
+    placeRequested = true;
+}
+
