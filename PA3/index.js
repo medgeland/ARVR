@@ -60,3 +60,42 @@ function loadScene() {
     controller.addEventListener("select", onSelect);
     scene.add(controller);
 
+
+    //overlay panel
+    overlay = document.getElementById("overlay");
+    statusText = document.getElementById("status");
+    fallbackText = document.getElementById("fallback");
+    clearBtn = document.getElementById("clear");
+    clearBtn.addEventListener("click", clearProducts);
+
+    overlay.addEventListener("beforexrselect", (event) => {
+        if (event.target !== overlay) {
+            event.preventDefault();
+        }
+    
+    });
+    //size check
+    const size = new THREE.Box3().setFromObject(buildProduct()).getSize(new THREE.Vector3());
+    console.log("product size (m): width " + size.x.toFixed(3) + ", height " + size.y.toFixed(3) + ", depth " + size.z.toFixed(3));
+
+    //query AR support
+    if (!navigator.xr) {
+        showFallback("WebXR is not available in this browser. Use Chrome on an ARCore Android phone.");
+    } else {
+        navigator.xr.isSessionSupported("immersive-ar")
+            .then((supported) => {
+                if (supported) {
+                    btn = document.createElement("button");
+                    btn.addEventListener("click", onRequestSession);
+                    btn.innerHTML = "START AR";
+                    overlay.insertBefore(btn, clearBtn);
+                } else {
+                    showFallback("immersive-ar is not supported. Use Chrome on an ARCore Android phone.");
+                }
+            })
+            .catch((reason) => {
+                showFallback("WebXR not supported: " + reason);
+            });
+    }
+    updateOverlay();
+}
