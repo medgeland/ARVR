@@ -288,3 +288,23 @@ function clearProducts() {
     }
     updateOverlay();
 }
+
+function endXRSession() {
+    // TODO: xrSession.end()
+    if (xrSession) {
+        if (hitTestSource) {
+            hitTestSource.cancel();
+            hitTestSource = null;
+        }
+        xrSession.end();
+    }
+}
+
+function onSessionEnd() {
+    // TODO: reset button, cancel hit-test source, delete anchors, clear state
+    if (hitTestSource) {
+        try {
+            hitTestSource.cancel();
+        } catch (error) {
+        }
+    }
