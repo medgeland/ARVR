@@ -178,5 +178,14 @@ function render(time, frame) {
     if (frame) {
         const localSpace = renderer.xr.getReferenceSpace();
         const session = frame.session;
+        const viewerPose = frame.getViewerPose(localSpace);
+        trackingLost = !viewerPose || viewerPose.emulatedPosition;
+        if (hitTestSourceRequested === false) {
+            hitTestSourceRequested = true;
+            session.requestReferenceSpace("viewer").then((viewerSpace) => {
+                session.requestHitTestSource({ space: viewerSpace }).then((source) => {
+                    hitTestSource = source;
+                });
+            });
 
-    }}
+    }
