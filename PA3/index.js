@@ -137,3 +137,11 @@ function onSelect() {
     placeRequested = true;
 }
 
+function onRequestSession() {
+    sessionState = "starting";
+    updateOverlay();
+    navigator.xr.requestSession("immersive-ar", {
+        requiredFeatures: ["hit-test"],
+        optionalFeatures: ["anchors", "dom-overlay"],
+        domOverlay: { root: overlay }
+    })
