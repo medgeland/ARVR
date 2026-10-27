@@ -206,5 +206,13 @@ function render(time, frame) {
                     hit = hitTestResults[0];
                     reticle.matrix.fromArray(hitPose.transform.matrix);
                     reticle.visible = true;
-                    
-
+                    // surface normal = y-axis column of the pose matrix
+                    // angle to world up (0, 1, 0): cos(angle) = normal.up
+                    const m = hitPose.transform.matrix;
+                    const tilt = Math.acos(Math.min(1, Math.max(-1, m[5]))) * 180 / Math.PI;
+                    hitValid = tilt <= TOLERANCE_DEG;
+                    reticle.material.color.set(hitValid ? 0x00ff00 : 0xff0000);
+                    reticleState = (hitValid ? "valid" : "too tilted") + " (" + tilt.toFixed(1) + "°)";
+                }
+            }
+        }
