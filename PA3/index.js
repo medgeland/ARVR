@@ -216,3 +216,11 @@ function render(time, frame) {
                 }
             }
         }
+        // TODO: if (placeRequested) place with this frame's hit (+ createAnchor)
+
+        if (placeRequested) {
+            placeRequested = false;
+            if (hit && hitValid && !trackingLost) {
+                placeProduct(hit, viewerPose);
+            }
+        }
