@@ -224,3 +224,22 @@ function render(time, frame) {
                 placeProduct(hit, viewerPose);
             }
         }
+
+        // TODO: update every anchored product from frame.getPose(anchor.anchorSpace, ...)
+        for (const item of placed) {
+            if (item.anchor) {
+                const anchorPose = frame.getPose(item.anchor.anchorSpace, localSpace);
+                if (anchorPose) {
+                    const p = anchorPose.transform.position;
+                    item.object.position.set(p.x, p.y, p.z);
+                    item.object.rotation.set(0, item.yaw, 0);
+                }
+            }
+        }
+
+        updateOverlay();
+    }
+    renderer.render(scene, camera);
+}
+
+
