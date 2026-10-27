@@ -178,8 +178,11 @@ function render(time, frame) {
     if (frame) {
         const localSpace = renderer.xr.getReferenceSpace();
         const session = frame.session;
+
+        // TODO: viewer pose + tracking-lost check
         const viewerPose = frame.getViewerPose(localSpace);
         trackingLost = !viewerPose || viewerPose.emulatedPosition;
+        // TODO: request the hit-test source ONCE
         if (hitTestSourceRequested === false) {
             hitTestSourceRequested = true;
             session.requestReferenceSpace("viewer").then((viewerSpace) => {
@@ -190,7 +193,7 @@ function render(time, frame) {
 
     }
     
-    //hit results
+    // TODO: hit results -> reticle matrix, tilt filter, colour
     let hit = null;
     let hitValid = false;
     reticle.visible = false;
@@ -199,4 +202,9 @@ function render(time, frame) {
             const hitTestResults = frame.getHitTestResults(hitTestSource);
             if (hitTestResults.length > 0) {
                 const hitPose = hitTestResults[0].getPose(localSpace);
-                
+                if (hitPose) {
+                    hit = hitTestResults[0];
+                    reticle.matrix.fromArray(hitPose.transform.matrix);
+                    reticle.visible = true;
+                    
+
