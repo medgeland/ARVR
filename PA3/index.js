@@ -153,3 +153,8 @@ function onRequestSession() {
             updateOverlay();
         }));
 }
+function onSessionStarted(session) {
+    btn.removeEventListener("click", onRequestSession);
+    btn.addEventListener("click", endXRSession);
+    btn.innerHTML = "STOP AR";
+    xrSession = session;
