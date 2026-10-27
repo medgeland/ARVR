@@ -308,3 +308,34 @@ function onSessionEnd() {
         } catch (error) {
         }
     }
+    clearProducts();
+    hitTestSource = null;
+    hitTestSourceRequested = false;
+    placeRequested = false;
+    reticle.visible = false;
+    reticleState = "none";
+    trackingLost = false;
+    anchorsOn = false;
+    xrSession = null;
+    sessionState = "ended";
+    btn.innerHTML = "START AR";
+    btn.removeEventListener("click", endXRSession);
+    btn.addEventListener("click", onRequestSession);
+    updateOverlay();
+}
+
+function updateOverlay() {
+    let text = "ID " + STUDENT_ID + " | " + VARIANT + "\n" +
+        "session: " + sessionState + "\n" +
+        "reticle: " + reticleState + "\n" +
+        "anchors: " + (anchorsOn ? "on" : "off") + "\n" +
+        "products: " + placed.length;
+    if (trackingLost) {
+        text += "\nTracking lost — move the phone slowly";
+    }
+    statusText.textContent = text;
+}
+ function showFallback(message) {
+    fallbackText.textContent = message;
+    fallbackText.hidden = false;
+}
