@@ -170,3 +170,13 @@ function onSessionStarted(session) {
     });
 }
 
+function animate() {
+    renderer.setAnimationLoop(render);
+}
+
+function render(time, frame) {
+    if (frame) {
+        const localSpace = renderer.xr.getReferenceSpace();
+        const session = frame.session;
+
+    }}
