@@ -158,3 +158,15 @@ function onSessionStarted(session) {
     btn.addEventListener("click", endXRSession);
     btn.innerHTML = "STOP AR";
     xrSession = session;
+
+    xrSession.addEventListener("end", onSessionEnd);
+    anchorsOn = xrSession.enabledFeatures !== undefined && xrSession.enabledFeatures.includes("anchors");
+    sessionState = "running";
+    updateOverlay();
+
+    renderer.xr.setReferenceSpaceType("local");
+    renderer.xr.setSession(xrSession).then(() => {
+        animate();
+    });
+}
+
