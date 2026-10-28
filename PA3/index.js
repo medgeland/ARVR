@@ -20,7 +20,7 @@ let sessionState = "not started";
 let reticleState = "none";
 let anchorsOn = false;
 let trackingLost = false;
-//experiment logging (E1, E3, E4)
+// experiment logging (E1, E3, E4)
 let viewerSpace = null;
 let firstPoseLogged = false;
 let firstHitLogged = false;
