@@ -20,11 +20,6 @@ let sessionState = "not started";
 let reticleState = "none";
 let anchorsOn = false;
 let trackingLost = false;
-// experiment logging (E1, E3, E4)
-let viewerSpace = null;
-let firstPoseLogged = false;
-let firstHitLogged = false;
-let sessionStartTime = 0;
 
 loadScene();
 
@@ -184,10 +179,10 @@ function render(time, frame) {
         const localSpace = renderer.xr.getReferenceSpace();
         const session = frame.session;
 
-        // TODO: viewer pose + tracking-lost check
+        // viewer pose + tracking-lost check
         const viewerPose = frame.getViewerPose(localSpace);
         trackingLost = !viewerPose || viewerPose.emulatedPosition;
-        // TODO: request the hit-test source ONCE
+        // request the hit-test source ONCE
         if (hitTestSourceRequested === false) {
             hitTestSourceRequested = true;
             session.requestReferenceSpace("viewer").then((viewerSpace) => {
@@ -198,7 +193,7 @@ function render(time, frame) {
 
     }
     
-    // TODO: hit results -> reticle matrix, tilt filter, colour
+    // hit results -> reticle matrix, tilt filter, colour
     let hit = null;
     let hitValid = false;
     reticle.visible = false;
@@ -221,7 +216,7 @@ function render(time, frame) {
                 }
             }
         }
-        // TODO: if (placeRequested) place with this frame's hit (+ createAnchor)
+        // if (placeRequested) place with this frame's hit (+ createAnchor)
 
         if (placeRequested) {
             placeRequested = false;
@@ -230,7 +225,7 @@ function render(time, frame) {
             }
         }
 
-        // TODO: update every anchored product from frame.getPose(anchor.anchorSpace, ...)
+        // update every anchored product from frame.getPose(anchor.anchorSpace, ...)
         for (const item of placed) {
             if (item.anchor) {
                 const anchorPose = frame.getPose(item.anchor.anchorSpace, localSpace);
@@ -295,7 +290,7 @@ function clearProducts() {
 }
 
 function endXRSession() {
-    // TODO: xrSession.end()
+    // xrSession.end()
     if (xrSession) {
         if (hitTestSource) {
             hitTestSource.cancel();
@@ -306,7 +301,7 @@ function endXRSession() {
 }
 
 function onSessionEnd() {
-    // TODO: reset button, cancel hit-test source, delete anchors, clear state
+    // reset button, cancel hit-test source, delete anchors, clear state
     if (hitTestSource) {
         try {
             hitTestSource.cancel();
