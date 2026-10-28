@@ -12,7 +12,7 @@
 |Fourth-to-last|0|0 mod 2 =0|Product faces the user (rotation about y only)|
 
 ## Device and browser:
-- Tested in Chrome [VERSION, from chrome://version] on macOS with the Immersive Web Emulator extension (Meta Quest 3 profile)
+- Tested in Chrome on macOS with the Immersive Web Emulator extension (Meta Quest 3 profile)
 - Three.js 0.186.1, loaded through an import map pinned to that version
 
 ## How to run:
