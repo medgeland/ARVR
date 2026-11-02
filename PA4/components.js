@@ -201,6 +201,14 @@ AFRAME.registerComponent("x0137-texture", {
     this.applySettings(this.texture);
     this.applySettings(this.normalTexture);
 },
-
-
+loadTexture: function (src) {
+    if (!src) {
+        return null;
+    }
+    if (typeof src === "string") {
+        return new THREE.TextureLoader().load(src);
+    }
+    const texture = new THREE.Texture(src);
+    texture.needsUpdate = true;
+    return texture;
 }
