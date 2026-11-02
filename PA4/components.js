@@ -119,5 +119,22 @@ AFRAME.registerComponent("x0137-motion", {
         } else if (this.data.type === "pulse") {
             object3D.scale.copy(this.baseScale).multiplyScalar(1 + a * s);
         }
+    };
 
-}
+    pause: function () {
+
+    },
+    play: function () { 
+
+    };
+
+    remove: function () {
+        this.restoreBase();
+    },
+
+    restoreBase: function () {
+        this.el.object3D.position.copy(this.basePosition);
+        this.el.object3D.scale.copy(this.baseScale);
+    }
+});
+
