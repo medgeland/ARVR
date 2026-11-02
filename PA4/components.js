@@ -64,3 +64,19 @@ AFRAME.registerSystem("x0137-gallery", {
             }
         }
     },
+    updatePanel: function () {
+        const text = document.querySelector("#selected-text");
+        if (!text) {
+            return;
+        }
+        const total = this.exhibits.length;
+        let value = "Selected: none (0 of " + total + ")";
+        if (this.selected) {
+            const name = this.selected.getAttribute("x0137-exhibit").name;
+            const n = this.exhibits.indexOf(this.selected) + 1;
+            value = "Selected: " + name + " (" + n + " of " + total + ")";
+        }
+        text.setAttribute("value", value);
+    }
+});
+
