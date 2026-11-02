@@ -43,3 +43,24 @@ AFRAME.registerSystem("x0137-gallery", {
         this.updatePanel();
     },
     
+    onKeyDown: function (event) {
+        if (event.key === "m" || event.key === "M") {
+            // M: pause or resume the motion of every exhibit
+            this.motionPaused = !this.motionPaused;
+            for (const el of this.exhibits) {
+                const motion = el.components["x0137-motion"];
+                if (motion) {
+                    if (this.motionPaused) {
+                        motion.pause();
+                    } else {
+                        motion.play();
+                    }
+                }
+            }
+        } else if (event.key === "x" || event.key === "X") {
+            // X: remove the selected exhibit from the DOM
+            if (this.selected) {
+                this.selected.parentNode.removeChild(this.selected);
+            }
+        }
+    },
