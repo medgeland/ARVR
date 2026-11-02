@@ -138,3 +138,69 @@ AFRAME.registerComponent("x0137-motion", {
     }
 });
 
+AFRAME.registerComponent("x0137-texture", {
+    schema: { // configuration only: src (map), repeat (vec2), normalSrc, anisotropy
+        src: { type: "map" },
+        repeat: { type: "vec2", default: { x: 1, y: 1 } },
+        normalSrc: { type: "map", default: "" },
+        anisotropy: { type: "number", default: 8 }
+    },
+
+    init: function () { //find the mesh now or on object3dset
+        this.mesh = null;
+        this.originalMaterial = null;
+        this.material = null;
+        this.texture = null;
+        this.normalTexture = null;
+        this.onObject3DSet = this.onObject3DSet.bind(this);
+
+        const mesh = this.el.getObject3D("mesh");
+        if (mesh) {
+            this.setMesh(mesh);
+        } else {
+            this.el.addEventListener("object3dset", this.onObject3DSet);
+        }
+
+    },
+    onObject3DSet: function (event) {
+        if (event.detail.type === "mesh") {
+            this.el.removeEventListener("object3dset", this.onObject3DSet);
+            this.setMesh(this.el.getObject3D("mesh"));
+            this.update({});
+        }
+    },
+    setMesh: function (mesh) {
+        this.mesh = mesh;
+        this.originalMaterial = mesh.material;
+        this.material = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 1 });
+        mesh.material = this.material;
+    },
+    update: function (oldData) { //update only when src changes
+        if (!this.mesh) {
+            return;
+        }
+    if (this.data.src !== oldData.src) {
+        if (this.texture) {
+            this.texture.dispose();
+        }
+        this.texture = this.loadTexture(this.data.src);
+        if (this.texture) {
+            this.texture.colorSpace = THREE.SRGBColorSpace;
+        }
+        this.material.map = this.texture;
+        this.material.needsUpdate = true;
+    }
+    if (this.data.normalSrc !== oldData.normalSrc) {
+        if (this.normalTexture) {
+            this.normalTexture.dispose();
+        }
+        this.normalTexture = this.loadTexture(this.data.normalSrc);
+        this.material.normalMap = this.normalTexture;
+        this.material.needsUpdate = true;
+    }
+    this.applySettings(this.texture);
+    this.applySettings(this.normalTexture);
+},
+
+
+}
