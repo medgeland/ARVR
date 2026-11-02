@@ -7,3 +7,27 @@
     <script src="https://aframe.io/releases/1.8.0/aframe.min.js"></script>
     <script src="components.js"></script>
 </head>
+<body>
+    <a-scene fog="type: exponential; density: 0.03; color: #cfe3f7"
+    cursor="rayOrigin: mouse" raycaster="objects: .exhibit, .exhibit *" stats>
+    <a-assets>
+        <img id="snow" src="textures/snow.jpg">
+        <img id="ice" src="textures/ice.jpg">
+        <img id="quilt" src="textures/quilt.jpg">
+        </a-assets>
+
+        <!--environment - sky, ground, lights-->
+        <a-plane id="ground" width="100" height="100" rotation="-90 0 0" x0137-texture="src: #snow; repeat: 10 10; anisotropy: 8"></a-plane>
+        <a-sky color="#cfe3f7"></a-sky>
+        <a-entity light="type: ambient; color: #dde8f5; intensity: 1.0"></a-entity>
+        <a-entity light="type: directional; color: #fff6e8; intensity: 1.3" position="-2 4 2"></a-entity>
+        #camera rig
+        <a-entity id="rig" wasd-controls>
+            <a-entity camera look-controls position="0 1.6 0"></a-entity>
+            <a-entity laser-controls="hand: left" raycaster="objects: .exhibit, .exhibit *; far: 20"></a-entity>
+            <a-entity laser-controls="hand: right" raycaster="objects: .exhibit, .exhibit *; far: 20"></a-entity>
+        </a-entity>
+
+        <!-- six exhibits: ring, radius 4 m, around the start point, each facing the centre -->
+         
+</body>
