@@ -80,3 +80,18 @@ AFRAME.registerSystem("x0137-gallery", {
     }
 });
 
+AFRAME.registerComponent("x0137-motion", {
+    schema: {
+        type: { type: "string", oneOf: ["bob", "orbit", "pulse"], default: "bob" },
+        amplitude: { type: "number", default: 0.15 }, //in meters (bob orbit) or scale fraction
+        period: { type: "number", default: 3 }, //s per cycle
+        phase: { type: "number", default: 0 } //rad
+    };
+    init: function () {
+        // base pose: every frame is computed from it, so the motion never drifts
+        this.basePosition = this.el.object3D.position.clone();
+        this.baseScale = this.el.object3D.scale.clone();
+        this.angle = 0;
+        this.currentAmplitude = this.data.amplitude;
+    }
+}
