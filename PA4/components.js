@@ -93,5 +93,31 @@ AFRAME.registerComponent("x0137-motion", {
         this.baseScale = this.el.object3D.scale.clone();
         this.angle = 0;
         this.currentAmplitude = this.data.amplitude;
-    }
+    };
+    update: function (oldData) {
+        // new motion type starts again from the base pose
+        if (oldData.type !== undefined && oldData.type !== this.data.type) {
+            this.restoreBase();
+        }
+        // new amplitude is reached gradually in tick (no jump);
+        // new period only changes how fast the angle grows (no jump)
+    };
+    tick: function (time, timeDelta) {
+        const dt = Math.min(timeDelta / 1000, 0.1);
+        if (this.data.period > 0) {
+            this.angle += 2 * Math.PI * dt / this.data.period;
+        }
+        this.currentAmplitude += (this.data.amplitude - this.currentAmplitude) * Math.min(1, dt * 3);
+        const s = Math.sin(this.angle + this.data.phase);
+        const a = this.currentAmplitude;
+        const object3D = this.el.object3D;
+        if (this.data.type === "bob") {
+            object3D.position.y = this.basePosition.y + a * s;
+        } else if (this.data.type === "orbit") {
+            object3D.position.x = this.basePosition.x + a * Math.cos(this.angle + this.data.phase);
+            object3D.position.z = this.basePosition.z + a * s;
+        } else if (this.data.type === "pulse") {
+            object3D.scale.copy(this.baseScale).multiplyScalar(1 + a * s);
+        }
+
 }
