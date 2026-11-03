@@ -211,4 +211,19 @@ loadTexture: function (src) {
     const texture = new THREE.Texture(src);
     texture.needsUpdate = true;
     return texture;
+},
+applySettings: function (texture) {
+    if (!texture) {
+        return;
+    }
+    const maxAnisotropy = this.el.sceneEl.renderer.capabilities.getMaxAnisotropy();
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(this.data.repeat.x, this.data.repeat.y);
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.anisotropy = Math.min(this.data.anisotropy, maxAnisotropy);
+    texture.needsUpdate = true;
+},
+
 }
