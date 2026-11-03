@@ -267,5 +267,16 @@ AFRAME.registerComponent("x0137-exhibit", {
         this.el.appendChild(this.panel);
         this.gallery.register(this.el);
     },
+    events: {
+        mouseenter: function () {
+            this.setHighlight(true);
+        },
+        mouseleave: function () {
+            this.setHighlight(false);
+        },
+        click: function () {
+            this.gallery.select(this.el);
+        }
+    },
+
     
-    }
