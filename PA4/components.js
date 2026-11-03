@@ -86,14 +86,14 @@ AFRAME.registerComponent("x0137-motion", {
         amplitude: { type: "number", default: 0.15 }, //in meters (bob orbit) or scale fraction
         period: { type: "number", default: 3 }, //s per cycle
         phase: { type: "number", default: 0 } //rad
-    };
+    },
     init: function () {
         // base pose: every frame is computed from it, so the motion never drifts
         this.basePosition = this.el.object3D.position.clone();
         this.baseScale = this.el.object3D.scale.clone();
         this.angle = 0;
         this.currentAmplitude = this.data.amplitude;
-    };
+    },
     update: function (oldData) {
         // new motion type starts again from the base pose
         if (oldData.type !== undefined && oldData.type !== this.data.type) {
@@ -101,7 +101,7 @@ AFRAME.registerComponent("x0137-motion", {
         }
         // new amplitude is reached gradually in tick (no jump);
         // new period only changes how fast the angle grows (no jump)
-    };
+    },
     tick: function (time, timeDelta) {
         const dt = Math.min(timeDelta / 1000, 0.1);
         if (this.data.period > 0) {
@@ -119,14 +119,14 @@ AFRAME.registerComponent("x0137-motion", {
         } else if (this.data.type === "pulse") {
             object3D.scale.copy(this.baseScale).multiplyScalar(1 + a * s);
         }
-    };
+    },
 
     pause: function () {
 
     },
     play: function () { 
 
-    };
+    },
 
     remove: function () {
         this.restoreBase();
