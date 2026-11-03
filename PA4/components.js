@@ -226,4 +226,20 @@ applySettings: function (texture) {
     texture.needsUpdate = true;
 },
 
+remove: function () {
+    this.el.removeEventListener("object3dset", this.onObject3DSet);
+    if (this.mesh) {
+        this.mesh.material = this.originalMaterial;
+    }
+    if (this.texture) {
+        this.texture.dispose();
+    }
+    if (this.normalTexture) {
+        this.normalTexture.dispose();
+    }
+    if (this.material) {
+        this.material.dispose();
+    }
 }
+});
+
