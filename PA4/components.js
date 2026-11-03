@@ -243,3 +243,29 @@ remove: function () {
 }
 });
 
+AFRAME.registerComponent("x0137-exhibit", {
+    //name, info
+    schema: {
+        name: { type: "string", default: "Exhibit" },
+        info: { type: "string", default: "" }
+    },
+
+    init: function() {
+        this.gallery = this.el.sceneEl.systems["x0137-gallery"];
+        this.isSelected = false;
+        this.normalAmplitude = null;
+
+        this.panel = document.createElement("a-entity");
+        this.panel.setAttribute("text", {
+            value: this.data.name + "\n" + this.data.info,
+            align: "center",
+            width: 3,
+            color: "#10202f"
+        });
+        this.panel.setAttribute("position", "0 2 0");
+        this.panel.setAttribute("visible", false);
+        this.el.appendChild(this.panel);
+        this.gallery.register(this.el);
+    },
+    
+    }
