@@ -279,4 +279,28 @@ AFRAME.registerComponent("x0137-exhibit", {
         }
     },
 
-    
+    setHighlight: function (on) {
+        this.el.object3D.traverse(function (node) {
+            if (node.isMesh && node.material && node.material.emissive) {
+                node.material.emissive.set(on ? "#3a5f8a" : "#000000");
+            }
+        });
+    },
+    setSelected: function (on) {
+        this.isSelected = on;
+        this.panel.setAttribute("visible", on);
+        if (on) {
+            this.normalAmplitude = this.el.getAttribute("x0137-motion").amplitude;
+            this.el.setAttribute("x0137-motion", "amplitude", this.normalAmplitude * 2);
+        } 
+        else if (this.normalAmplitude !== null) {
+            this.el.setAttribute("x0137-motion", "amplitude", this.normalAmplitude);
+        }
+    },
+    remove: function () {
+        this.gallery.unregister(this.el);
+        if (this.panel.parentNode) {
+            this.panel.parentNode.removeChild(this.panel);
+        }
+    }
+});
