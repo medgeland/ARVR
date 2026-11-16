@@ -80,4 +80,40 @@
             <span>· 240137</span>
         </footer>
     </main>
+    <script>
+        (function () {
+            const i18n = window.X0137_I18N;
+            function render() {
+                i18n.apply();
+                document.title = i18n.t("app.title") + " – 240137";
+                document.getElementById("card-kid").href = "kids.html?lang=" + i18n.lang;
+                document.getElementById("card-trainer").href = "trainer.html?lang=" + i18n.lang;
+                document.querySelectorAll(".lang-btn").forEach(function (b) {
+                    b.setAttribute("aria-pressed", b.dataset.lang === i18n.lang ? "true" : "false");
+                });
+            }
+            document.querySelectorAll(".lang-btn").forEach(function (b) {
+                b.addEventListener("click", function () {
+                    i18n.setLang(b.dataset.lang);
+                    render();
+                });
+            });
+            // Safari only lets page speak after user gesture. The card tap is that gesture:
+            // empty utterance "unlocks" speechSynthesis for the next page on iOS
+            document.querySelectorAll(".card").forEach(function (card) {
+                card.addEventListener("click", function () {
+                    if ("speechSynthesis" in window) {
+                        try {
+                            const u = new SpeechSynthesisUtterance(" ");
+                            u.volume = 0;
+                            window.speechSynthesis.speak(u);
+                        } catch (e) { /* ignore */ }
+                    }
+                });
+            });
+
+            render();
+        })();
+    </script>
 </body>
+</html>
