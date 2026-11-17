@@ -107,4 +107,55 @@
             <a-cylinder radius="0.2" height="0.5" position="0.2 0.25 -2.6" color="#d0d6dc"></a-cylinder>
         </a-entity>
 
+        <!-- state: helper ("Your turn"): child treats light spot on the doctor's forearm.
+            doctor stands behind little table (kids.js moves the GLB there). -->
+        <a-entity x0137-state-group="helper" visible="false">
+            <!-- child's goggles -->
+            <a-entity id="kid-goggles" class="clickable" x0137-explorable="name: kgoggles" position="-0.27 1.025 0.84">
+                <a-box width="0.09" height="0.05" depth="0.03" position="-0.055 0 0" color="#ff9a3c"></a-box>
+                <a-box width="0.09" height="0.05" depth="0.03" position="0.055 0 0" color="#ff9a3c"></a-box>
+                <a-box width="0.03" height="0.012" depth="0.03" position="0 0.01 0" color="#37474f"></a-box>
+            </a-entity>
+            <!-- treatment tray: sunscreen tube, folded cotton cloth, and 3 light windows (added by kids.js) -->
+            <a-entity id="kid-tray" position="0.03 1.005 0.84">
+                <a-box width="0.44" height="0.01" depth="0.1" color="#cfd8dc"></a-box>
+                <a-box width="0.44" height="0.02" depth="0.008" position="0 0.01 0.05" color="#b0bec5"></a-box>
+                <a-box width="0.44" height="0.02" depth="0.008" position="0 0.01 -0.05" color="#b0bec5"></a-box>
+                <a-entity id="kid-tube" class="clickable" x0137-explorable="name: tube" position="-0.15 0.022 0" rotation="0 20 0">
+                    <a-box width="0.09" height="0.026" depth="0.035" color="#ffffff"></a-box>
+                    <a-box width="0.022" height="0.028" depth="0.037" position="0.05 0 0" color="#ff9a3c"></a-box>
+                </a-entity>
+                <a-box id="kid-cloth" class="clickable" x0137-explorable="name: towel" width="0.08" height="0.025" depth="0.07"
+                       position="-0.05 0.018 0" color="#f5f5f0"></a-box>
+            </a-entity>
+            <!-- light device, the same block model as in the Trainer; its origin is the light window -->
+            <a-entity id="kid-hand-device" x0137-voxel-model="model: excimer" position="0.42 1.002 0.82"></a-entity>
+        </a-entity>
+
+        <!-- helper + done: table (chest height, so it sits in the middle of the seated view) and doctor's forearm (time-lapse plays on it too) -->
+        <a-entity x0137-state-group="helper done" visible="false">
+            <a-box width="0.85" height="0.04" depth="0.52" position="0.1 0.98 0.64"
+                   x0137-texture="src: textures/wood.jpg; color: #c8a27a"></a-box>
+            <a-box width="0.05" height="0.96" depth="0.05" position="-0.28 0.48 0.86" color="#a88660"></a-box>
+            <a-box width="0.05" height="0.96" depth="0.05" position="0.48 0.48 0.86" color="#a88660"></a-box>
+            <a-box width="0.05" height="0.96" depth="0.05" position="-0.28 0.48 0.42" color="#a88660"></a-box>
+            <a-box width="0.05" height="0.96" depth="0.05" position="0.48 0.48 0.42" color="#a88660"></a-box>
+            <!-- upper arm in the white coat, from the doctor's shoulder down to the elbow on the table -->
+            <a-box width="0.11" height="0.47" depth="0.12" position="0.21 1.21 0.365" rotation="-54.9 0 14.8" color="#f5f5f5"></a-box>
+            <!-- padded armrest, tilted 45° toward the child so the skin faces them -->
+            <a-box width="0.64" height="0.06" depth="0.17" position="0.03 1.03 0.57" rotation="45 0 0" color="#9fd0c7"></a-box>
+            <!-- forearm across the armrest: elbow at the doctor's side, hand to the child's left (local +x = world -x) -->
+            <a-entity id="kid-arm" position="0.065 1.08 0.6" rotation="45 180 0">
+                <a-box width="0.06" height="0.078" depth="0.108" position="-0.24 0.009 0" color="#f5f5f5"></a-box>
+                <a-box width="0.014" height="0.082" depth="0.112" position="-0.207 0.011 0" color="#e0e0e0"></a-box>
+                <a-entity id="kid-skin" class="clickable" x0137-voxel-skin="voxelMm: 4; skin: #e8b98f"></a-entity>
+                <a-box width="0.1" height="0.032" depth="0.078" position="0.175 -0.014 0" color="#e8b98f"></a-box>
+                <a-box width="0.07" height="0.022" depth="0.017" position="0.258 -0.019 -0.028" color="#e8b98f"></a-box>
+                <a-box width="0.082" height="0.022" depth="0.017" position="0.264 -0.019 -0.009" color="#e8b98f"></a-box>
+                <a-box width="0.078" height="0.022" depth="0.017" position="0.262 -0.019 0.01" color="#e8b98f"></a-box>
+                <a-box width="0.06" height="0.022" depth="0.016" position="0.253 -0.019 0.029" color="#e8b98f"></a-box>
+                <a-box width="0.06" height="0.022" depth="0.02" position="0.17 -0.019 0.052" rotation="0 -35 0" color="#e8b98f"></a-box>
+            </a-entity>
+        </a-entity>
+
         
