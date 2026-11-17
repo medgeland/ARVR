@@ -50,4 +50,26 @@
         <a-entity id="guide" position="1.1 0 -0.9" rotation="0 -30 0"
                   gltf-model="models/doctor.glb"
                   animation-mixer="clip: Idle; loop: repeat"></a-entity>
-        
+        <!-- state: waiting -->
+        <a-entity x0137-state-group="waiting">
+            <a-box class="clickable" x0137-explorable="name: door" width="1" height="2.1" depth="0.08"
+                   position="0 1.05 -3.95" color="#8fc1d4"></a-box>
+            <a-box width="0.1" height="0.1" depth="0.1" position="0.38 1.0 -3.88" color="#c9a74a"></a-box>
+            <a-entity position="-2 0 -1.5">
+                <a-box width="0.6" height="0.45" depth="0.6" position="0 0.225 0"
+                       x0137-texture="src: textures/leather.jpg; color: #7aa6c2"></a-box>
+                <a-box width="0.6" height="0.6" depth="0.1" position="0 0.75 -0.25"
+                       x0137-texture="src: textures/leather.jpg; color: #7aa6c2"></a-box>
+            </a-entity>
+            <a-entity position="-1.2 0 -1.5">
+                <a-box width="0.6" height="0.45" depth="0.6" position="0 0.225 0"
+                       x0137-texture="src: textures/leather.jpg; color: #7aa6c2"></a-box>
+                <a-box width="0.6" height="0.6" depth="0.1" position="0 0.75 -0.25"
+                       x0137-texture="src: textures/leather.jpg; color: #7aa6c2"></a-box>
+            </a-entity>
+            <a-entity position="-3.2 0 -3.2">
+                <a-cylinder radius="0.18" height="0.4" position="0 0.2 0" color="#c96f4a"></a-cylinder>
+                <a-sphere radius="0.35" position="0 0.75 0" color="#4f9a5a"></a-sphere>
+            </a-entity>
+            <a-plane width="1.6" height="1" position="-2 1.7 -3.98" color="#bfe3ff"></a-plane>
+        </a-entity>
