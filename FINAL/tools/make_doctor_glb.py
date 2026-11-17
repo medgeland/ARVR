@@ -65,3 +65,13 @@ HEAD_PARTS = [
     ("SmileL", "#a1665e", (0.02, 0.014, 0.01), (-0.05, 1.51, 0.136)),
     ("SmileR", "#a1665e", (0.02, 0.014, 0.01), (0.05, 1.51, 0.136)),
 ]
+GOGGLE_PARTS = [ # inside the head, hidden by the app until demo
+    ("GoggleLens", "#ff9a3c", (0.25, 0.08, 0.03), (0, 1.6, 0.15)),
+    ("GoggleStrap", "#37474f", (0.3, 0.025, 0.28), (0, 1.6, 0)),
+]
+ARM_PIVOT = (0.29, 1.34, 0) # right arm waves around the shoulder
+ARM_PARTS = [
+    ("SleeveR", COAT, (0.11, 0.46, 0.12), (0, -0.23, 0)),
+    ("HandR", SKIN, (0.09, 0.09, 0.1), (0, -0.505, 0)),
+    ("Patch", "#fbefe4", (0.092, 0.05, 0.06), (0, -0.49, 0.022)),   # own material: recoloured live
+]
