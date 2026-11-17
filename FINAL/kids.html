@@ -44,3 +44,10 @@
             <a-entity id="left-hand" laser-controls="hand: left" raycaster="objects: .clickable, .clickable *; far: 10"></a-entity>
             <a-entity id="right-hand" laser-controls="hand: right" raycaster="objects: .clickable, .clickable *; far: 10"></a-entity>
         </a-entity>
+        <!-- guide: block doctor as a GLB model (own work, made by tools/make_doctor_glb.py).
+             Its clips Idle / Talk / Wave / Jump play through aframe-extras' animation-mixer;
+             kids.js switches clips and uses the named nodes "Goggles" and "Patch". -->
+        <a-entity id="guide" position="1.1 0 -0.9" rotation="0 -30 0"
+                  gltf-model="models/doctor.glb"
+                  animation-mixer="clip: Idle; loop: repeat"></a-entity>
+        
