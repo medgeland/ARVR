@@ -19,4 +19,19 @@
              raycaster="objects: .clickable, .clickable *"
              renderer="colorManagement: true; antialias: true"
              vr-mode-ui="enabled: true">
-             
+        <!-- environment: one room, furniture changes with the state -->
+        <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
+        <a-entity light="type: directional; color: #fff6e8; intensity: 1.0" position="-2 4 3"></a-entity>
+
+        <a-plane id="floor" width="8" height="8" rotation="-90 0 0"
+                 x0137-texture="src: textures/floor.jpg; repeat: 4 4; color: #d9c7a8"></a-plane>
+        <a-plane width="8" height="3" position="0 1.5 -4"
+                 x0137-texture="src: textures/wall.jpg; repeat: 3 1; color: #eef3ee; tint: #f4fbf6"></a-plane>
+        <a-plane width="8" height="3" position="-4 1.5 0" rotation="0 90 0"
+                 x0137-texture="src: textures/wall.jpg; repeat: 3 1; color: #eef3ee; tint: #f4fbf6"></a-plane>
+        <a-plane width="8" height="3" position="4 1.5 0" rotation="0 -90 0"
+                 x0137-texture="src: textures/wall.jpg; repeat: 3 1; color: #eef3ee; tint: #f4fbf6"></a-plane>
+        <a-plane width="8" height="3" position="0 1.5 4" rotation="0 180 0"
+                 x0137-texture="src: textures/wall.jpg; repeat: 3 1; color: #eef3ee; tint: #f4fbf6"></a-plane>
+        <a-plane width="8" height="8" position="0 3 0" rotation="90 0 0" color="#ffffff"></a-plane>
+        
