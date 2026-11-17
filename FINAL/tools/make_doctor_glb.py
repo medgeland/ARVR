@@ -204,4 +204,42 @@ class Builder:
 def sampled(duration, steps, fn):
     times = [duration * i / steps for i in range(steps + 1)]
     return times, [fn(t) for t in times]
-    
+
+# build
+b = Builder()
+b.build_cube()
+
+goggles = b.node("Goggles", children=b.parts(GOGGLE_PARTS, HEAD_PIVOT))
+head = b.node("Head", children=b.parts(HEAD_PARTS, HEAD_PIVOT) + [goggles], translation=HEAD_PIVOT)
+arm = b.node("ArmR", children=b.parts(ARM_PARTS), translation=ARM_PIVOT)
+body = b.node("Body", children=b.parts(BODY_PARTS) + [head, arm])
+root = b.node("Doctor", children=[body])
+b.gltf["scenes"][0]["nodes"] = [root]
+# Idle: body bobs 1.2cm up and down, 3.6s per breath
+b.clip("Idle", [(body, "translation", *sampled(3.6, 24, lambda t: [0, 0.012 * (1 - math.cos(2 * math.pi * t / 3.6)) / 2, 0]))])
+
+# Talk: head nods ±4 degrees, body bobs a little faster
+b.clip("Talk", [
+    (head, "rotation", *sampled(1.2, 12, lambda t: quat_x(4 * math.sin(2 * math.pi * t / 0.6)))),
+    (body, "translation", *sampled(1.2, 12, lambda t: [0, 0.008 * (1 - math.cos(2 * math.pi * t / 1.2)) / 2, 0])),
+])
+# Wave: arm up to 150 degrees, four wiggles between 135degrees and 165degrees, back down
+wave_t, wave_v = [0.0, 0.45], [quat_z(0), quat_z(150)]
+t = 0.45
+for i in range(8):
+    t += 0.26
+    wave_t.append(t)
+    wave_v.append(quat_z(135 if i % 2 == 0 else 165))
+wave_t.append(t + 0.45)
+wave_v.append(quat_z(0))
+b.clip("Wave", [(arm, "rotation", wave_t, wave_v)])
+
+# Jump: two jumps of 14cm, arm thrown up on each
+jt = [0, 0.28, 0.56, 0.84, 1.12]
+b.clip("Jump", [
+    (root, "translation", jt, [[0, 0, 0], [0, 0.14, 0], [0, 0, 0], [0, 0.14, 0], [0, 0, 0]]),
+    (arm, "rotation", jt, [quat_z(0), quat_z(120), quat_z(20), quat_z(120), quat_z(0)]),
+])
+
+size = b.write(OUT)
+print(f"wrote {OUT} ({size / 1024:.1f} KB, {len(b.gltf['nodes'])} nodes, {len(b.gltf['animations'])} clips)")
