@@ -20,4 +20,20 @@
             "privacy.body": "The microphone works only while you hold the mic button. The audio goes to the browser's speech service (Google in Chrome, Apple in Safari) to turn it into text. Nothing is stored. There are no accounts, no names and no health data. You can use the on-screen buttons instead of your voice.",
             "device.note": "VR works in Chrome with the Immersive Web Emulator, or in a Meta Quest browser. Other browsers, including Safari on Mac and iPhone, show a 3D page you control with the mouse, touch and buttons.",
             "credits.link": "Credits and licences",
+
+            // shared HUD
+            "hud.home": "Home",
+            "hud.wait": "Wait",
+            "hud.again": "Again",
+            "hud.next": "Go on",
+            "hud.mic": "Hold to talk",
+            "hud.mic.listening": "Listening…",
+            "hud.heard": "I heard:",
+            "speech.nomatch": "Sorry, I didn't catch that. You can tap a button.",
+            "speech.denied": "The mic is off. Use the buttons.",
+            "speech.network": "The speech service is not reachable. Use the buttons.",
+            "speech.nospeech": "I didn't hear anything. Try again or tap a button.",
+            "speech.unsupported": "Voice is not available in this browser. Use the buttons.",
+
+            
         }}})
