@@ -49,3 +49,24 @@
         <a-box width="1.6" height="0.05" depth="0.9" position="0 0.75 -0.2"
                x0137-texture="src: textures/wood.jpg; color: #c8a27a"></a-box>
         <a-box width="1.5" height="0.72" depth="0.05" position="0 0.36 -0.62" color="#a88660"></a-box>
+
+        <!-- user's own forearm, resting on the table palm down, as in a real home session.
+             It lies across the table, hand to the right: local +x = world +x; local y = 0 is 3 cm above the table.
+             The forearm skin is a voxel grid; lesion, moles, towel, ruler are added by trainer.js. -->
+        <a-entity id="arm" position="0.02 0.805 -0.1" rotation="0 0 0">
+            <!-- sleeve -->
+            <a-box width="0.08" height="0.078" depth="0.108" position="-0.25 0.009 0" color="#3d5a80"></a-box>
+            <a-box width="0.014" height="0.082" depth="0.112" position="-0.207 0.011 0" color="#2f4866"></a-box>
+            <!-- forearm skin: 3 mm blocks -->
+            <a-entity id="skin" class="clickable" x0137-voxel-skin="voxelMm: 3"></a-entity>
+            <!-- hand -->
+            <a-box width="0.1" height="0.032" depth="0.078" position="0.175 -0.014 0" color="#e3b48f"></a-box>
+            <a-box width="0.012" height="0.034" depth="0.078" position="0.13 -0.013 0" color="#d9a77f"></a-box>
+            <!-- fingers -->
+            <a-box width="0.07" height="0.022" depth="0.017" position="0.258 -0.019 -0.028" color="#e3b48f"></a-box>
+            <a-box width="0.082" height="0.022" depth="0.017" position="0.264 -0.019 -0.009" color="#e3b48f"></a-box>
+            <a-box width="0.078" height="0.022" depth="0.017" position="0.262 -0.019 0.01" color="#e3b48f"></a-box>
+            <a-box width="0.06" height="0.022" depth="0.016" position="0.253 -0.019 0.029" color="#e3b48f"></a-box>
+            <!-- thumb -->
+            <a-box width="0.06" height="0.022" depth="0.02" position="0.17 -0.019 0.052" rotation="0 -35 0" color="#e3b48f"></a-box>
+        </a-entity>
