@@ -73,3 +73,38 @@
             </a-entity>
             <a-plane width="1.6" height="1" position="-2 1.7 -3.98" color="#bfe3ff"></a-plane>
         </a-entity>
+
+        <!-- state: treatment -->
+        <a-entity x0137-state-group="treatment" visible="false">
+            <a-entity class="clickable" x0137-explorable="name: couch" position="-1 0 -2">
+                <a-box width="1.9" height="0.5" depth="0.7" position="0 0.25 0"
+                       x0137-texture="src: textures/leather.jpg; color: #9fd0c7"></a-box>
+                <a-box width="0.5" height="0.15" depth="0.7" position="-0.7 0.57 0" color="#ffffff"></a-box>
+            </a-entity>
+            <a-entity class="clickable" x0137-explorable="name: goggles" position="0.6 0.95 -1.6">
+                <a-box width="0.6" height="0.75" depth="0.5" position="0 -0.5 0"
+                       x0137-texture="src: textures/wood.jpg; color: #c8a27a"></a-box>
+                <a-entity id="table-goggles">
+                    <a-box width="0.09" height="0.06" depth="0.03" position="-0.06 0.03 0" color="#ff9a3c"></a-box>
+                    <a-box width="0.09" height="0.06" depth="0.03" position="0.06 0.03 0" color="#ff9a3c"></a-box>
+                    <a-box width="0.04" height="0.015" depth="0.03" position="0 0.04 0" color="#37474f"></a-box>
+                </a-entity>
+            </a-entity>
+            <a-entity id="kid-device" class="clickable" x0137-explorable="name: device" position="1.6 0 -2">
+                <a-box width="0.5" height="0.9" depth="0.5" position="0 0.45 0" color="#e9eef3"></a-box>
+                <a-box width="0.36" height="0.12" depth="0.02" position="0 0.7 0.26" color="#283593"></a-box>
+                <a-box width="0.12" height="0.25" depth="0.12" position="0 1.02 0" color="#ffffff"></a-box>
+            </a-entity>
+            <!-- the hand piece: it rests on device and travels to the doctor's hand in the demo.
+                 Its light face is on +z, so object3D.lookAt() points it at the patch. -->
+            <a-entity id="kid-wand" position="1.6 1.2 -2">
+                <a-box width="0.14" height="0.09" depth="0.16" color="#ffffff"></a-box>
+                <a-box width="0.05" height="0.05" depth="0.12" position="0 0 -0.12" color="#5f6670"></a-box>
+                <a-box id="kid-wand-light" width="0.1" height="0.06" depth="0.006" position="0 0 0.082"
+                       material="color: #8ab4ff; emissive: #8ab4ff; emissiveIntensity: 0.2"></a-box>
+                <a-entity id="kid-wand-glow" light="type: point; color: #a9c6ff; intensity: 0; distance: 0.6" position="0 0 0.12"></a-entity>
+            </a-entity>
+            <a-cylinder radius="0.2" height="0.5" position="0.2 0.25 -2.6" color="#d0d6dc"></a-cylinder>
+        </a-entity>
+
+        
