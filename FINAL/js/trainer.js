@@ -300,3 +300,86 @@
             const v = exact ? cm : Math.round(cm / CONFIG.heightStepCm) * CONFIG.heightStepCm;
             this.heightCm = Math.max(0.5, Math.min(12, v));
         },
+
+        // RESULT
+        showResult: function () {
+            const s = this.stats, spot = CONFIG.spots[0];
+            const best = this.bestNozzle(spot);
+            const share = s.samples ? s.good / s.samples : 0;
+            const closeShare = s.samples ? s.close / s.samples : 0;
+            const coverage = s.samples ? s.cover / s.samples : 0;
+            const maxRed = this.skin.cells.reduce((m, c) => Math.max(m, c.red), 0);
+            const t = Math.round(s.t * 10) / 10;
+            const timeOk = Math.abs(s.t - CONFIG.timeS.target) <= CONFIG.timeS.tol;
+            const pct = (x) => Math.round(x * 100);
+
+            const checks = [
+                { key: "goggles", ok: !!this.done.goggles },
+                { key: "sunscreen", ok: !!this.done.sunscreen, tip: i18n.t("trainer.tip.sunscreen") },
+                { key: "vitamin", ok: this.vitaminTaken === true, tip: i18n.t("trainer.tip.vitamin") },
+                { key: "towel", ok: this.towelOn, tip: i18n.t("trainer.tip.towel") },
+                { key: "nozzle", ok: this.nozzle && this.nozzle.mm === best.mm,
+                  tip: fmt("trainer.tip.nozzle", { spot: spot.diameterMm, best: best.mm, mm: this.nozzle ? this.nozzle.mm : "-" }) },
+                { key: "aim", ok: coverage >= CONFIG.pass.coverage, tip: fmt("trainer.tip.aim", { p: pct(coverage) }) },
+                { key: "distance", ok: share >= CONFIG.pass.distanceShare,
+                  tip: closeShare >= (s.far / Math.max(1, s.samples))
+                      ? fmt("trainer.tip.close", { p: pct(closeShare) })
+                      : fmt("trainer.tip.far", { p: pct(1 - share - closeShare) }) },
+                { key: "time", ok: timeOk,
+                  tip: fmt(s.t < CONFIG.timeS.target ? "trainer.tip.short" : "trainer.tip.long", { t: t, target: CONFIG.timeS.target }) },
+                { key: "skin", ok: maxRed < CONFIG.pass.maxRed, tip: i18n.t("trainer.tip.burn") }
+            ];
+            if (timeOk) this.markDone("time");
+            if (share >= CONFIG.pass.distanceShare) this.markDone("distance");
+
+            const passed = checks.filter((c) => c.ok).length;
+            this.resultText = fmt("trainer.result.score", { n: passed, m: checks.length }) + "\n" +
+                checks.map((c) => (c.ok ? "\u2713 " : "\u2717 ") + i18n.t("trainer.check." + c.key)).join("\n");
+            const wrap = document.createElement("div");
+            wrap.className = "x0137-result";
+            const box = document.createElement("div");
+            box.className = "x0137-box box";
+            box.setAttribute("role", "dialog");
+            const h = document.createElement("h2");
+            h.textContent = i18n.t("trainer.result.title");
+            const score = document.createElement("div");
+            score.className = "score";
+            score.textContent = fmt("trainer.result.score", { n: passed, m: checks.length });
+            const ul = document.createElement("ul");
+            checks.forEach(function (c) {
+                const li = document.createElement("li");
+                li.className = c.ok ? "ok" : "miss";
+                const head = document.createElement("div");
+                head.className = "head";
+                // sign and a word, never color alone
+                head.textContent = (c.ok ? "✓ " : "✗ ") + i18n.t("trainer.check." + c.key) +
+                    " — " + i18n.t(c.ok ? "trainer.ok" : "trainer.miss");
+                li.appendChild(head);
+                if (!c.ok && c.tip) {
+                    const tip = document.createElement("div");
+                    tip.className = "tip";
+                    tip.textContent = c.tip;
+                    li.appendChild(tip);
+                }
+                ul.appendChild(li);
+            });
+            const actions = document.createElement("div");
+            actions.className = "actions";
+            const again = document.createElement("button");
+            again.type = "button";
+            again.className = "x0137-btn home";
+            again.textContent = i18n.t("trainer.btn.retry");
+            again.addEventListener("click", function () { window.location.reload(); });
+            const home = document.createElement("a");
+            home.className = "x0137-btn";
+            home.href = "index.html?lang=" + i18n.lang;
+            home.textContent = i18n.t("hud.home");
+            actions.append(again, home);
+            box.append(h, score, ul, actions);
+            wrap.appendChild(box);
+            document.body.appendChild(wrap);
+            again.focus();
+
+            this.say(fmt("trainer.result.score", { n: passed, m: checks.length }));
+            this.refreshVr();
+        },
