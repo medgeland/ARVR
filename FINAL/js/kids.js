@@ -247,4 +247,181 @@
             } catch (e) { /* ignore */ }
         },
 
-        
+        // "Your turn" (helper)
+        // Steps: goggles -> cream -> towel -> window -> shine -> finished
+        buildHelper: function () {
+            const skinEl = document.getElementById("kid-skin");
+            this.kidSkin = skinEl && skinEl.components["x0137-voxel-skin"];
+            this.kidArm = document.getElementById("kid-arm");
+            this.kidDevice = document.getElementById("kid-hand-device");
+            this.deviceRest = this.kidDevice.object3D.position.clone();
+            this.rightHand = document.getElementById("right-hand");
+            this.leftHand = document.getElementById("left-hand");
+            if (this.kidSkin) {
+                const l = HELPER.lesion, p = this.kidSkin.pointAt(l.along, l.across);
+                this.spotCells = this.kidSkin.addLesion({ id: l.id, type: l.type, diameterMm: l.diameterMm, x: p.x, z: p.z });
+                this.spotCentre = p;
+                // moles: dark blocks the child covers with sunscreen
+                this.moles = HELPER.moles.map((m, i) => {
+                    const q = this.kidSkin.pointAt(m.along, m.across);
+                    return this.kidSkin.addMole(q.x, q.z, (e) => {
+                        e.setAttribute("x0137-explorable", "name: mole:" + i);
+                        e.setAttribute("color", "#4a2e20");
+                    });
+                }).filter(Boolean);
+                this.buildTowel();
+            }
+            this.buildArrow();
+            // 3 light windows on the tray, each a grey plate with a round blue opening
+            const tray = document.getElementById("kid-tray");
+            HELPER.windows.forEach((w, i) => {
+                const holder = document.createElement("a-entity");
+                holder.classList.add("clickable");
+                holder.setAttribute("x0137-explorable", "name: window:" + w.id);
+                holder.setAttribute("position", (0.06 + i * 0.06) + " 0.01 0");
+                holder.appendChild(windowMesh(w.mm, 0.05));
+                tray.appendChild(holder);
+            });
+            // under device: chosen window, light column and soft glow
+            this.windowSlot = document.createElement("a-entity");
+            this.windowSlot.setAttribute("position", "0 -0.003 0");
+            this.kidDevice.appendChild(this.windowSlot);
+            this.glow = document.createElement("a-entity");
+            this.glow.setAttribute("light", "type: point; color: #a9c6ff; intensity: 0; distance: 0.3");
+            this.glow.setAttribute("position", "0 -0.01 0");
+            this.kidDevice.appendChild(this.glow);
+            this.footprint = document.createElement("a-entity");
+            this.footprint.object3D.visible = false;
+            this.kidArm.appendChild(this.footprint);
+            // HTML: height buttons, "Hold the light", the distance + light meter
+            this.controls = document.createElement("div");
+            this.controls.className = "x0137-row";
+            this.controls.hidden = true;
+            ui.row.parentNode.insertBefore(this.controls, ui.row);
+            const add = (key, cls) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "x0137-btn" + (cls ? " " + cls : "");
+                b.textContent = i18n.t(key);
+                this.controls.appendChild(b);
+                return b;
+            };
+            add("trainer.btn.up").addEventListener("click", () => this.setHeight(this.heightCm + HELPER.stepCm));
+            add("trainer.btn.down").addEventListener("click", () => this.setHeight(this.heightCm - HELPER.stepCm));
+            const hold = add("kids.btn.shine", "home");
+            hold.addEventListener("pointerdown", (e) => { e.preventDefault(); this.startShine("button"); });
+            ["pointerup", "pointerleave", "pointercancel"].forEach((t) =>
+                hold.addEventListener(t, () => { if (this.shineSource === "button") this.stopShine(); }));
+            this.meter = document.createElement("div");
+            this.meter.className = "x0137-box x0137-meter";
+            this.meter.hidden = true;
+            this.meter.innerHTML = '<div><span class="lbl"></span>: <b class="val"></b> <span class="num"></span></div>' +
+                '<div class="bar"><div class="band"></div><div class="pin"></div></div>' +
+                '<div><span class="lbl2"></span>: <span class="sec"></span></div><div class="bar"><div class="fill"></div></div>';
+            this.meter.querySelector(".lbl").textContent = i18n.t("trainer.dist.label");
+            this.meter.querySelector(".lbl2").textContent = i18n.t("kids.help.light");
+            const d = HELPER.distanceCm, band = this.meter.querySelector(".band");
+            band.style.left = ((d.target - d.tol) / 12 * 100) + "%";
+            band.style.width = (2 * d.tol / 12 * 100) + "%";
+            ui.topRight.appendChild(this.meter);   // top right, so it never covers the arm
+            this.bindHelperInput();
+            this.resetHelper();
+        },
+
+        bindHelperInput: function () {
+            const skinEl = document.getElementById("kid-skin");
+            // desktop / touch: hold the mouse or finger on the spot
+            skinEl.addEventListener("mousedown", () => {
+                if (this.state !== "helper" || this.el.is("vr-mode")) return;
+                this.pointerDown = true;
+                this.aimFromPointer();
+                this.startShine("pointer");
+            });
+            const release = () => {
+                if (!this.pointerDown) return;
+                this.pointerDown = false;
+                if (this.shineSource === "pointer") this.stopShine();
+            };
+            window.addEventListener("mouseup", release);
+            window.addEventListener("touchend", release);
+            window.addEventListener("wheel", (e) => {
+                if (this.state === "helper") this.setHeight(this.heightCm + (e.deltaY > 0 ? -1 : 1) * HELPER.stepCm);
+            }, { passive: true });
+            window.addEventListener("keydown", (e) => {
+                if (this.state !== "helper" || e.repeat) return;
+                if (e.key === "e" || e.key === "E" || e.key === "у" || e.key === "У") this.setHeight(this.heightCm + HELPER.stepCm);
+                if (e.key === "q" || e.key === "Q" || e.key === "й" || e.key === "Й") this.setHeight(this.heightCm - HELPER.stepCm);
+            });
+            // VR: laser on the spot + hold trigger; thumbstick or B/Y up, A/X down
+            this.stickY = 0;
+            [this.rightHand, this.leftHand].forEach((hand) => {
+                if (!hand) return;
+                hand.addEventListener("triggerdown", () => {
+                    const rc = hand.components.raycaster;
+                    const first = rc && rc.intersections && rc.intersections[0];
+                    if (this.state === "helper" && first && this.kidSkin && first.object === this.kidSkin.mesh) this.startShine("trigger");
+                });
+                hand.addEventListener("triggerup", () => { if (this.shineSource === "trigger") this.stopShine(); });
+                hand.addEventListener("thumbstickmoved", (e) => { this.stickY = e.detail.y || 0; });
+                const up = () => { if (this.state === "helper") this.setHeight(this.heightCm + HELPER.stepCm); };
+                const down = () => { if (this.state === "helper") this.setHeight(this.heightCm - HELPER.stepCm); };
+                hand.addEventListener("bbuttondown", up);
+                hand.addEventListener("ybuttondown", up);
+                hand.addEventListener("abuttondown", down);
+                hand.addEventListener("xbuttondown", down);
+            });
+        },
+
+        resetHelper: function () {
+            this.helperStep = "goggles";
+            this.windowMm = null;
+            this.heightCm = HELPER.startHeightCm;
+            this.aim = null;
+            this.shineT = 0;
+            this.stopShine();
+            if (this.kidSkin) this.kidSkin.reset();
+            if (this.kidDevice) { this.kidDevice.object3D.position.copy(this.deviceRest); this.kidDevice.object3D.rotation.set(0, 0, 0); }
+            if (this.windowSlot) this.windowSlot.innerHTML = "";
+            if (this.beam) { this.beam.parentNode.removeChild(this.beam); this.beam = null; }
+            if (this.footprint) this.footprint.object3D.visible = false;
+            const g = document.getElementById("kid-goggles");
+            if (g) g.object3D.visible = true;
+            this.gogglesView(false);
+            this.creamReady = false;
+            (this.moles || []).forEach((m) => {
+                delete m.dataset.covered;
+                m.setAttribute("color", "#4a2e20");
+                m.components["x0137-explorable"] && m.components["x0137-explorable"].base.set(1, 1, 1);
+                m.object3D.scale.set(1, 1, 1);
+            });
+            const cloth = document.getElementById("kid-cloth");
+            if (cloth) cloth.object3D.visible = true;
+            if (this.towel) this.towel.object3D.visible = false;
+            this.updateGuide();
+        },
+
+        startHelper: function () {
+            this.resetHelper();
+            this.controls.hidden = true;
+            this.meter.hidden = true;
+            this.sayAll(["kids.help.intro"]);
+        },
+
+        leaveHelper: function () {
+            this.stopShine();
+            if (this.arrow) this.arrow.object3D.visible = false;
+            if (this.controls) this.controls.hidden = true;
+            if (this.meter) this.meter.hidden = true;
+            this.gogglesView(false);
+        },
+
+        helperGoggles: function () {
+            if (this.helperStep !== "goggles") return;
+            document.getElementById("kid-goggles").object3D.visible = false;
+            if (this.gogglesObj) this.gogglesObj.visible = true;   // the doctor puts theirs on too
+            this.gogglesView(true);
+            this.helperStep = "cream";
+            this.sayAll(["kids.help.goggles"]);
+            this.updateGuide();
+            this.refreshVr();
+        },
