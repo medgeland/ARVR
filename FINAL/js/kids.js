@@ -929,3 +929,128 @@
                 return r;
             });
         },
+
+
+        // doctor model (GLB)
+        // clips made by tools/make_doctor_glb.py, played by aframe-extras' animation-mixer
+        playClip: function (name) {
+            const guide = document.getElementById("guide");
+            if (!guide) return;
+            const once = name === "Wave" || name === "Jump";
+            this.clip = name;
+            // "once" clip that already finished stays parked at its end; rewind it so it plays again
+            const comp = guide.components["animation-mixer"];
+            const model = guide.getObject3D("mesh");
+            if (comp && comp.mixer && model && model.animations) {
+                const clip = THREE.AnimationClip.findByName(model.animations, name);
+                const action = clip && comp.mixer.existingAction(clip);
+                if (action) action.reset();
+                // same clip as now: A-Frame skips an unchanged setAttribute, so replay directly
+                if (comp.data.clip === name) { comp.playAction(); return; }
+            }
+            guide.setAttribute("animation-mixer", { clip: name, loop: once ? "once" : "repeat", crossFadeDuration: 0.25 });
+        },
+
+        bindGuide: function () {
+            const guide = document.getElementById("guide");
+            if (!guide) return;
+            this.clip = "Idle";
+            const onModel = () => {
+                const model = guide.getObject3D("mesh");
+                if (!model) return;
+                this.gogglesObj = model.getObjectByName("Goggles");
+                this.patchObj = model.getObjectByName("Patch");
+                this.armObj = model.getObjectByName("ArmR");
+                if (this.armObj) this.armObj.visible = this.doctorAt !== "table";
+                if (this.gogglesObj) this.gogglesObj.visible = false;
+                this.setPatchColor(this.patchColor(this.healProgress || 0));
+            };
+            guide.addEventListener("model-loaded", onModel);
+            onModel();   // in case the model loaded before this listener
+            // a one-off clip has finished: back to breathing
+            guide.addEventListener("animation-finished", () => this.playClip("Idle"));
+        },
+
+        setPatchColor: function (hex) {
+            if (this.patchObj && this.patchObj.material) this.patchObj.material.color.set(hex);
+        },
+
+        // several lines one after another; a newer line (a question, Again) or Wait cancels the rest
+        sayAll: function (keys) {
+            const gen = this.gen = (this.gen || 0) + 1;
+            let p = Promise.resolve();
+            keys.forEach((k) => {
+                p = p.then(() => (this.paused || gen !== this.gen ? null : this._speak(i18n.t(k))));
+            });
+            return p.then(() => gen === this.gen && !this.paused);
+        },
+
+        questionButtons: function () {
+            return [
+                { key: "kids.q.pain", intent: "q_pain" },
+                { key: "kids.q.light", intent: "q_light" },
+                { key: "kids.q.goggles", intent: "q_goggles" },
+                { key: "kids.q.skin", intent: "q_skin" }
+            ];
+        },
+
+        // Wait freezes the doctor (all animation components on the guide); any other intent resumes
+        guideMotion: function (on) {
+            const g = document.getElementById("guide");
+            if (!g) return;
+            if (on) g.play(); else g.pause();
+        },
+
+        vrSubtitle: function (on) {
+            const t = document.getElementById("x0137-vr-subtitle");
+            if (t) t.setAttribute("visible", on);
+        }
+    });
+
+    AFRAME.registerComponent("x0137-state-group", {
+        schema: { type: "string" },
+        init: function () {
+            this.el.sceneEl.systems["x0137-kids"].registerGroup(this.el);
+        }
+    });
+
+    AFRAME.registerComponent("x0137-explorable", {
+        schema: { name: { type: "string" } },
+        init: function () {
+            const el = this.el;
+            this.base = el.object3D.scale.clone();
+            el.addEventListener("mouseenter", () => el.object3D.scale.copy(this.base).multiplyScalar(1.08));
+            el.addEventListener("mouseleave", () => el.object3D.scale.copy(this.base));
+            el.addEventListener("click", () => {
+                // hidden groups stay in the raycaster, so ignore clicks on invisible objects
+                if (!isShown(el)) return;
+                el.sceneEl.systems["x0137-kids"].explore(this.data.name);
+            });
+        }
+    });
+
+    // a light window: grey plate with a round blue opening of the given size
+    function windowMesh(mm, plate) {
+        const g = document.createElement("a-entity");
+        const p = document.createElement("a-box");
+        p.setAttribute("width", plate);
+        p.setAttribute("height", 0.006);
+        p.setAttribute("depth", plate);
+        p.setAttribute("color", "#8a939c");
+        const hole = document.createElement("a-cylinder");
+        hole.setAttribute("radius", mm / 2000);
+        hole.setAttribute("height", 0.0065);
+        hole.setAttribute("color", "#6fa8ff");
+        g.append(p, hole);
+        return g;
+    }
+
+    function isShown(el) {
+        let o = el.object3D;
+        while (o) {
+            if (!o.visible) return false;
+            o = o.parent;
+        }
+        return true;
+    }
+})();
