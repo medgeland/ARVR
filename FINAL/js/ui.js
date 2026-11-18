@@ -154,3 +154,74 @@
             });
             this.row.appendChild(mic);
         },
+        // In-scene panel for VR, where the HTML buttons are not visible. It is built only while
+        // headset view is on, so its buttons never catch desktop clicks.
+        //   const p = ui.vrPanel({ position, rotation, width });
+        //   p.set(text, [[{ label, onPress, primary }, ...], ...rows]); p.show(); p.hide();
+        vrPanel: function (opts) {
+            const scene = document.querySelector("a-scene");
+            const W = opts.width || 0.45, BH = 0.05, GAP = 0.012, PAD = 0.02;
+            const panel = { text: "", rows: [], root: null, visible: false };
+
+            function button(b, w) {
+                const el = document.createElement("a-entity");
+                el.classList.add("clickable");
+                el.setAttribute("geometry", { primitive: "box", width: w, height: BH, depth: 0.01 });
+                el.setAttribute("material", { color: b.primary ? "#ffd54f" : "#ffffff", shader: "flat" });
+                const label = document.createElement("a-entity");
+                // same letter height on every button (about 1.5 cm), whatever its width
+                label.setAttribute("x0137-label", { value: b.label, width: w * 0.94, color: "#1a237e", fontSize: Math.min(140, Math.round(15 / w)) });
+                label.setAttribute("position", "0 0 0.0062");
+                el.appendChild(label);
+                el.addEventListener("mouseenter", () => el.setAttribute("material", "color", "#c5cae9"));
+                el.addEventListener("mouseleave", () => el.setAttribute("material", "color", b.primary ? "#ffd54f" : "#ffffff"));
+                el.addEventListener("click", (e) => { e.stopPropagation(); b.onPress(); });
+                return el;
+            }
+
+            panel.render = function () {
+                if (panel.root) { panel.root.parentNode && panel.root.parentNode.removeChild(panel.root); panel.root = null; }
+                if (!panel.visible) return;
+                const root = document.createElement("a-entity");
+                root.setAttribute("position", opts.position);
+                root.setAttribute("rotation", opts.rotation);
+                const textH = panel.textHeight || opts.textHeight || 0.12;
+                const H = PAD * 2 + textH + panel.rows.length * (BH + GAP);
+                const bg = document.createElement("a-plane");
+                bg.setAttribute("width", W);
+                bg.setAttribute("height", H);
+                bg.setAttribute("material", { color: "#283593", shader: "flat", opacity: 0.94, transparent: true });
+                bg.setAttribute("position", "0 " + (-H / 2) + " -0.004");
+                root.appendChild(bg);
+                const txt = document.createElement("a-entity");
+                txt.setAttribute("x0137-label", { value: panel.text, width: W - PAD * 2, color: "#ffffff", fontSize: 56, align: "left", anchor: "top", bold: false });
+                txt.setAttribute("position", "0 " + (-PAD * 0.5) + " 0");
+                root.appendChild(txt);
+                panel.rows.forEach(function (row, r) {
+                    const y = -(PAD + textH + r * (BH + GAP) + BH / 2);
+                    const w = (W - PAD * 2 - GAP * (row.length - 1)) / row.length;
+                    row.forEach(function (b, i) {
+                        const el = button(b, w);
+                        el.setAttribute("position", (-W / 2 + PAD + w / 2 + i * (w + GAP)) + " " + y + " 0.004");
+                        root.appendChild(el);
+                    });
+                });
+                scene.appendChild(root);
+                panel.root = root;
+                panel.label = txt;
+            };
+            // text only (cheap, no rebuild)
+            panel.setText = function (text) {
+                panel.text = text;
+                if (panel.label) panel.label.setAttribute("x0137-label", "value", text);
+            };
+            panel.set = function (text, rows, textHeight) {
+                panel.text = text;
+                panel.rows = rows || [];
+                panel.textHeight = textHeight || null;
+                panel.render();
+            };
+            panel.show = function () { panel.visible = true; panel.render(); };
+            panel.hide = function () { panel.visible = false; panel.render(); };
+            return panel;
+        },
