@@ -533,4 +533,215 @@
             }
         },
 
-        
+        // BUILDING SCENE
+        buildSpot: function () {
+            const sp = CONFIG.spots[0];
+            const p = this.skin.pointAt(sp.along, sp.across);
+            this.spotCentre = p;
+            this.spotCells = this.skin.addLesion({ id: sp.id, type: sp.type, diameterMm: sp.diameterMm, x: p.x, z: p.z });
+            CONFIG.moles.forEach((m) => {
+                const q = this.skin.pointAt(m.along, m.across);
+                const el = this.skin.addMole(q.x, q.z, (e) => { e.setAttribute("x0137-tool", "name: mole"); e.classList.add("mole"); });
+                if (el) this.moles.push(el);
+            });
+        },
+
+        // ruler standing next to the spot: zero at the skin, a mark every cm, 4 cm in yellow
+        buildRuler: function () {
+            const c = this.spotCentre;
+            const top = this.skin.topAt(c.x, c.z);
+            const r = document.createElement("a-entity");
+            // on the far side of the arm, so it never hides the spot from the user
+            r.setAttribute("position", c.x + " 0 " + -(this.skin.data.halfW0 + 0.012));
+            const stick = document.createElement("a-box");
+            const len = top + 0.03 + 0.08;
+            stick.setAttribute("width", 0.006);
+            stick.setAttribute("depth", 0.006);
+            stick.setAttribute("height", len);
+            stick.setAttribute("position", "0 " + (-0.03 + len / 2) + " 0");
+            stick.setAttribute("color", "#fafafa");
+            r.appendChild(stick);
+            for (let cm = 0; cm <= 8; cm++) {
+                const tick = document.createElement("a-box");
+                const key = cm === CONFIG.distanceCm.target;
+                tick.setAttribute("width", key ? 0.022 : 0.012);
+                tick.setAttribute("depth", 0.008);
+                tick.setAttribute("height", key ? 0.003 : 0.0015);
+                tick.setAttribute("position", (key ? -0.006 : -0.002) + " " + (top + cm / 100) + " 0");
+                tick.setAttribute("color", key ? "#f9a825" : "#283593");
+                r.appendChild(tick);
+            }
+            const label = document.createElement("a-entity");
+            label.setAttribute("x0137-label", { value: CONFIG.distanceCm.target + " " + i18n.t("unit.cm"), width: 0.05, align: "left", fontSize: 240 });
+            label.setAttribute("position", "0.04 " + (top + CONFIG.distanceCm.target / 100) + " 0.005");
+            r.appendChild(label);
+
+            // marker = where the device is now (moves with the height, word + colour in the meter)
+            const marker = document.createElement("a-box");
+            marker.setAttribute("width", 0.034);
+            marker.setAttribute("height", 0.0025);
+            marker.setAttribute("depth", 0.014);
+            marker.setAttribute("color", "#c62828");
+            marker.object3D.visible = false;
+            r.appendChild(marker);
+            this.rulerMarker = marker;
+            this.rulerTop = top;
+
+            // clicking the ruler (mouse or VR laser) puts the device at that height
+            const hit = document.createElement("a-box");
+            hit.classList.add("clickable");
+            hit.setAttribute("width", 0.04);
+            hit.setAttribute("depth", 0.03);
+            hit.setAttribute("height", 0.1);
+            hit.setAttribute("position", "0 " + (top + 0.05) + " 0");
+            hit.setAttribute("material", "opacity: 0; transparent: true; depthWrite: false");
+            const rz = -(this.skin.data.halfW0 + 0.012);
+            hit.addEventListener("click", (e) => {
+                if (this.state !== "treat" || !e.detail || !e.detail.intersection) return;
+                // read the height where the ray crosses the ruler's own plane (not the front of the
+                // thick click box), so the mark you see is the height you get
+                const cursor = e.detail.cursorEl || this.el;
+                const rc = cursor.components.raycaster;
+                let y;
+                if (rc && rc.raycaster) {
+                    const inv = new THREE.Matrix4().copy(this.arm.object3D.matrixWorld).invert();
+                    const ray = rc.raycaster.ray.clone().applyMatrix4(inv);
+                    const t = (rz - ray.origin.z) / ray.direction.z;
+                    y = ray.origin.y + ray.direction.y * t;
+                } else {
+                    y = this.arm.object3D.worldToLocal(e.detail.intersection.point.clone()).y;
+                }
+                this.setHeight((y - top) * 100);
+            });
+            r.appendChild(hit);
+            this.arm.appendChild(r);
+        },
+
+        updateRulerMarker: function () {
+            if (!this.rulerMarker) return;
+            const m = this.rulerMarker.object3D;
+            m.visible = this.state === "treat";
+            m.position.y = this.rulerTop + this.heightCm / 100;
+            const d = CONFIG.distanceCm, good = Math.abs(this.heightCm - d.target) <= d.tol;
+            if (good !== this._markerGood) {
+                this._markerGood = good;
+                this.rulerMarker.setAttribute("color", good ? "#2e7d32" : "#c62828");
+            }
+        },
+
+        // towel on the arm: a white sheet with a square hole over the spot (hidden until used)
+        buildTowel: function () {
+            const c = this.spotCentre, d = this.skin.data;
+            const half = CONFIG.towelHoleMm / 2000;
+            this.skin.setTowel({ x: c.x, z: c.z, half: half });
+            const y = d.top0 + 0.006;
+            const t = document.createElement("a-entity");
+            t.object3D.visible = false;
+            const zMax = d.halfW0 + 0.012;
+            const pieces = [
+                // elbow side, wrist side, two strips beside the hole
+                [d.x0, c.x - half, -zMax, zMax],
+                [c.x + half, d.x1, -zMax, zMax],
+                [c.x - half, c.x + half, -zMax, c.z - half],
+                [c.x - half, c.x + half, c.z + half, zMax]
+            ];
+            pieces.forEach(function (p) {
+                const b = document.createElement("a-box");
+                b.setAttribute("width", p[1] - p[0]);
+                b.setAttribute("depth", p[3] - p[2]);
+                b.setAttribute("height", 0.004);
+                b.setAttribute("position", ((p[0] + p[1]) / 2) + " " + y + " " + ((p[2] + p[3]) / 2));
+                b.setAttribute("color", "#f5f5f0");
+                t.appendChild(b);
+            });
+            this.arm.appendChild(t);
+            this.towel = t;
+        },
+
+        // nozzle tray from CONFIG
+        buildNozzles: function () {
+            const tray = document.getElementById("nozzle-tray");
+            CONFIG.nozzles.forEach(function (n, i) {
+                const s = n.mm / 1000;
+                const holder = document.createElement("a-entity");
+                holder.setAttribute("position", (i * 0.06) + " 0.01 0");
+                holder.setAttribute("class", "clickable");
+                holder.setAttribute("x0137-tool", "name: nozzle:" + n.id);
+                holder.appendChild(nozzleMesh(n, 0.045));
+                const label = document.createElement("a-entity");
+                label.setAttribute("x0137-label", { value: n.mm + " " + i18n.t("unit.mm"), width: 0.05, fontSize: 240 });
+                label.setAttribute("rotation", "-90 0 0");
+                label.setAttribute("position", "0 0.006 0.032");
+                holder.appendChild(label);
+                tray.appendChild(holder);
+            });
+        },
+
+        // nozzle under the window, light beam, footprint on the skin, glow, screen timer
+        buildDeviceParts: function () {
+            const dev = this.device;
+            this.nozzleSlot = document.createElement("a-entity");
+            this.nozzleSlot.setAttribute("position", "0 -0.003 0");
+            dev.appendChild(this.nozzleSlot);
+
+            this.footprint = document.createElement("a-entity");
+            this.footprint.object3D.visible = false;
+            this.arm.appendChild(this.footprint);
+
+            this.glow = document.createElement("a-entity");
+            this.glow.setAttribute("light", "type: point; color: #9db8ff; intensity: 0; distance: 0.25");
+            this.glow.setAttribute("position", "0 -0.01 0");
+            dev.appendChild(this.glow);
+
+            const model = dev.components["x0137-voxel-model"];
+            const sp = model && model.points.S;
+            if (sp) {
+                this.screen = document.createElement("a-text");
+                this.screen.setAttribute("align", "center");
+                this.screen.setAttribute("color", "#cfe3ff");
+                this.screen.setAttribute("width", 0.2);
+                this.screen.setAttribute("rotation", "-90 0 0");
+                this.screen.setAttribute("position", sp.x + " " + (sp.y + 0.0015) + " " + sp.z);
+                dev.appendChild(this.screen);
+            }
+            this.updateScreen();
+        },
+
+        shapeNozzle: function (n) {
+            const s = n.mm / 1000;
+            this.nozzleSlot.innerHTML = "";
+            this.nozzleSlot.appendChild(nozzleMesh(n, s + 0.014));
+            // beam: the light column from the window to the skin (scaled to the height every frame)
+            if (this.beam) this.beam.parentNode.removeChild(this.beam);
+            this.beam = document.createElement(n.shape === "round" ? "a-cylinder" : "a-box");
+            if (n.shape === "round") this.beam.setAttribute("radius", s / 2);
+            else { this.beam.setAttribute("width", s); this.beam.setAttribute("depth", s); }
+            this.beam.setAttribute("height", 1);
+            this.beam.setAttribute("material", "color: #8ab4ff; opacity: 0.12; transparent: true; depthWrite: false");
+            this.device.appendChild(this.beam);
+            // footprint on the skin
+            this.footprint.innerHTML = "";
+            const f = document.createElement(n.shape === "round" ? "a-circle" : "a-plane");
+            if (n.shape === "round") f.setAttribute("radius", s / 2);
+            else { f.setAttribute("width", s); f.setAttribute("height", s); }
+            f.setAttribute("rotation", "-90 0 0");
+            f.setAttribute("material", "color: #3f51b5; opacity: 0.3; transparent: true; depthWrite: false; side: double");
+            this.footprint.appendChild(f);
+            this.footprint.object3D.visible = true;
+        },
+
+        setGlow: function (on) {
+            this.glow.setAttribute("light", "intensity", on ? 0.6 : 0);
+            if (this.beam) this.beam.setAttribute("material", "opacity", on ? 0.35 : 0.12);
+        },
+
+        updateScreen: function () {
+            if (!this.screen) return;
+            const t = this.stats ? this.stats.t : 0;
+            const left = Math.round(CONFIG.timeS.target - t);
+            const v = left >= 0 ? "0:" + String(left).padStart(2, "0") : "+0:" + String(-left).padStart(2, "0");
+            if (v !== this._screenText) {
+                this._screenText = v;
+                this.screen.setAttribute("value", v);
+            }
+        },
