@@ -440,3 +440,97 @@
                 o.stop(a.currentTime + 0.3);
             } catch (e) { /* no audio: the subtitle still shows */ }
         },
+
+        // INPUT: mouse, touch, keyboard, VR controllers
+        bindInput: function () {
+            this.rightHand = document.getElementById("right-hand");
+            // desktop / touch: hover aims, holding the button on the skin exposes
+            this.skinEl.addEventListener("mousedown", () => {
+                // in VR the laser also sends mousedown; there the trigger handles exposure
+                if (this.state !== "treat" || this.el.is("vr-mode")) return;
+                this.pointerDown = true;
+                this.parked = true;
+                this.followPointer();
+                this.startExpose("pointer");
+            });
+            const release = () => {
+                if (!this.pointerDown) return;
+                this.pointerDown = false;
+                if (this.exposeSource === "pointer") this.stopExpose();
+            };
+            window.addEventListener("mouseup", release);
+            window.addEventListener("touchend", release);
+            window.addEventListener("touchcancel", release);
+            // a click on the skin outside an exposure parks the device there
+            this.skinEl.addEventListener("click", () => { if (this.state === "treat") this.parked = true; });
+            // scroll wheel = height
+            window.addEventListener("wheel", (e) => {
+                if (this.state !== "treat") return;
+                this.setHeight(this.heightCm + (e.deltaY > 0 ? -1 : 1) * CONFIG.heightStepCm);
+            }, { passive: true });
+            // keyboard: E / Q = height, Space = expose (every key also has a button)
+            window.addEventListener("keydown", (e) => {
+                if (this.state !== "treat" || e.repeat) return;
+                // E = higher, Q = lower (W A S D and the arrows walk around the room)
+                if (e.key === "e" || e.key === "E" || e.key === "у" || e.key === "У") this.setHeight(this.heightCm + CONFIG.heightStepCm);
+                if (e.key === "q" || e.key === "Q" || e.key === "й" || e.key === "Й") this.setHeight(this.heightCm - CONFIG.heightStepCm);
+                if (e.key === " " && e.target === document.body) { e.preventDefault(); this.startExpose("key"); }
+            });
+            window.addEventListener("keyup", (e) => {
+                if (e.key === " " && this.exposeSource === "key") this.stopExpose();
+            });
+            // VR (Quest controllers or the Immersive Web Emulator), either hand:
+            //   laser on the arm + hold trigger = light; thumbstick up/down = height; B/Y = higher, A/X = lower
+            this.leftHand = document.getElementById("left-hand");
+            this.stickY = 0;
+            [this.rightHand, this.leftHand].forEach((hand) => {
+                if (!hand) return;
+                hand.addEventListener("triggerdown", () => {
+                    if (this.state === "treat" && this.laserOnSkin(hand)) this.startExpose("trigger");
+                });
+                hand.addEventListener("triggerup", () => { if (this.exposeSource === "trigger") this.stopExpose(); });
+                hand.addEventListener("thumbstickmoved", (e) => { this.stickY = e.detail.y || 0; });
+                const up = () => { if (this.state === "treat") this.setHeight(this.heightCm + CONFIG.heightStepCm); };
+                const down = () => { if (this.state === "treat") this.setHeight(this.heightCm - CONFIG.heightStepCm); };
+                hand.addEventListener("bbuttondown", up);
+                hand.addEventListener("ybuttondown", up);
+                hand.addEventListener("abuttondown", down);
+                hand.addEventListener("xbuttondown", down);
+            });
+        },
+
+        laserOnSkin: function (hand) {
+            const rc = hand.components.raycaster;
+            return !!(rc && rc.intersections && rc.intersections[0] && rc.intersections[0].object === this.skin.mesh);
+        },
+
+        // on-screen buttons for the current state
+        buildControls: function () {
+            if (!this.controls) {
+                this.controls = document.createElement("div");
+                this.controls.className = "x0137-row";
+                ui.row.parentNode.insertBefore(this.controls, ui.row);
+            }
+            this.controls.innerHTML = "";
+            const add = (key, cls) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "x0137-btn" + (cls ? " " + cls : "");
+                b.textContent = i18n.t(key);
+                this.controls.appendChild(b);
+                return b;
+            };
+            if (this.state === "intro") {
+                add("trainer.btn.start", "home").addEventListener("click", () => speech.fire("start", "button"));
+            } else if (this.state === "treat") {
+                add("trainer.btn.up").addEventListener("click", () => this.setHeight(this.heightCm + CONFIG.heightStepCm));
+                add("trainer.btn.down").addEventListener("click", () => this.setHeight(this.heightCm - CONFIG.heightStepCm));
+                const ex = add("trainer.btn.expose", "home");
+                ex.addEventListener("pointerdown", (e) => { e.preventDefault(); this.startExpose("button"); });
+                ["pointerup", "pointerleave", "pointercancel"].forEach((t) =>
+                    ex.addEventListener(t, () => { if (this.exposeSource === "button") this.stopExpose(); }));
+                ex.addEventListener("contextmenu", (e) => e.preventDefault());
+            }
+        },
+
+        
