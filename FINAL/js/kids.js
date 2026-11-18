@@ -129,3 +129,34 @@
             }
             this.sayAll(lines);
         },
+
+        // ------------------------------------------------------------ demo
+        // goggles on the doctor -> hand piece flies to the patch on the doctor's hand ->
+        // one soft light (fades in and out, no flashing) + a quiet hum with a subtitle -> "done"
+        runDemo: async function () {
+            const id = this.demoId = (this.demoId || 0) + 1;
+            this.step = "demo";
+            const ok = () => this.demoId === id && this.step === "demo" && this.state === "treatment" && !this.paused;
+
+            if (!(await this.sayAll(["kids.demo.goggles"])) || !ok()) return this.abortDemo(id);
+            this.putGoggles(true);
+            await sleep(500);
+            if (!ok()) return this.abortDemo(id);
+
+            const line = this.sayAll(["kids.demo.device"]);
+            await this.moveWand(true);
+            if (!(await line) || !ok()) return this.abortDemo(id);
+
+            this.setLight(true);
+            const light = Promise.all([this.sayAll(["kids.demo.light"]), sleep(2500)]);
+            // hum is a sound, so it gets its own subtitle next to the spoken line
+            ui.subtitle(i18n.t("kids.demo.light") + "  " + i18n.t("kids.sound.hum"));
+            const finished = (await light)[0];
+            this.setLight(false);
+            if (!finished || !ok()) return this.abortDemo(id);
+
+            this.moveWand(false);
+            if (!(await this.sayAll(["kids.demo.done"])) || !ok()) return this.abortDemo(id);
+            this.putGoggles(false);
+            this.setState("helper");
+        },
