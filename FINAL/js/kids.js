@@ -557,4 +557,66 @@
             this.updateGuide();
             this.refreshVr();
         },
-        
+
+        // the chosen window under the device + the light column + the outline it makes on the skin
+        shapeWindow: function (mm) {
+            const s = mm / 1000;
+            this.windowSlot.innerHTML = "";
+            this.windowSlot.appendChild(windowMesh(mm, s + 0.014));
+            if (this.beam) this.beam.parentNode.removeChild(this.beam);
+            this.beam = document.createElement("a-cylinder");
+            this.beam.setAttribute("radius", s / 2);
+            this.beam.setAttribute("height", 1);
+            this.beam.setAttribute("material", "color: #8ab4ff; opacity: 0.15; transparent: true; depthWrite: false");
+            this.beam.object3D.visible = false; // shown once the device is over the arm
+            this.kidDevice.appendChild(this.beam);
+            this.footprint.innerHTML = "";
+            const f = document.createElement("a-circle");
+            f.setAttribute("radius", s / 2);
+            f.setAttribute("rotation", "-90 0 0");
+            f.setAttribute("material", "color: #3f51b5; opacity: 0.3; transparent: true; depthWrite: false; side: double");
+            this.footprint.appendChild(f);
+            this.footprint.object3D.visible = false;
+        },
+
+        setHeight: function (cm) {
+            this.heightCm = Math.max(1, Math.min(12, cm));
+        },
+
+        aimFromPointer: function () {
+            const rc = this.el.components.raycaster;
+            const hit = rc && rc.intersections && rc.intersections[0];
+            if (!hit || !this.kidSkin || hit.object !== this.kidSkin.mesh) return;
+            const p = this.kidArm.object3D.worldToLocal(hit.point.clone());
+            this.aim = { x: p.x, z: p.z };
+        },
+
+        aimFromLaser: function () {
+            for (const hand of [this.rightHand, this.leftHand]) {
+                const rc = hand && hand.components.raycaster;
+                const hit = rc && rc.intersections && rc.intersections.find((x) => x.object === this.kidSkin.mesh);
+                if (!hit) continue;
+                const p = this.kidArm.object3D.worldToLocal(hit.point.clone());
+                this.aim = { x: p.x, z: p.z };
+                return;
+            }
+        },
+
+        startShine: function (source) {
+            if (this.state !== "helper" || this.shining) return;
+            if (this.helperStep !== "shine") { this.stepHint(); return; }
+            if (!this.aim) return;
+            this.shining = true;
+            this.shineSource = source;
+            this.glow.setAttribute("light", "intensity", 0.7);
+            if (this.beam) this.beam.setAttribute("material", "opacity", 0.35);
+            this.startHum();
+        },
+
+        stopShine: function () {
+            this.shining = false;
+            this.shineSource = null;
+            if (this.glow) this.glow.setAttribute("light", "intensity", 0);
+            if (this.beam) this.beam.setAttribute("material", "opacity", 0.15);
+            this.stopHum();
+        },
