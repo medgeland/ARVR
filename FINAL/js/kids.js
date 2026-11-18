@@ -620,3 +620,185 @@
             if (this.beam) this.beam.setAttribute("material", "opacity", 0.15);
             this.stopHum();
         },
+        // per frame while in "Your turn": aim, height, distance, light progress
+        tick: function (time, dt) {
+            if (this.state !== "helper" || this.helperStep !== "shine" || !this.kidSkin) return;
+            const sec = Math.min(dt, 100) / 1000;
+            if (this.el.is("vr-mode")) {
+                this.aimFromLaser();
+                if (Math.abs(this.stickY) > 0.15) this.setHeight(this.heightCm - this.stickY * 3 * sec);
+            } else {
+                this.aimFromPointer();
+            }
+            const d = HELPER.distanceCm, cm = this.heightCm;
+            const status = cm < d.target - d.tol ? "close" : cm > d.target + d.tol ? "far" : "good";
+            this.updateMeter(cm, status);
+            if (!this.aim) return;
+            const top = this.kidSkin.topAt(this.aim.x, this.aim.z) || 0;
+            const w = this.kidArm.object3D.localToWorld(new THREE.Vector3(this.aim.x, top + cm / 100, this.aim.z));
+            this.kidDevice.object3D.position.copy(w);
+            // tilt the device with the armrest, so the light column stays square to the skin
+            this.kidDevice.object3D.rotation.set(this.kidArm.object3D.rotation.x, 0, 0);
+            if (this.beam) { this.beam.object3D.visible = true; this.beam.object3D.position.y = -cm / 200; this.beam.object3D.scale.y = cm / 100; }
+            this.footprint.object3D.visible = true;
+            this.footprint.object3D.position.set(this.aim.x, top + 0.001, this.aim.z);
+            if (!this.shining) return;
+
+            const cells = this.kidSkin.footprint(this.aim.x, this.aim.z, { shape: "round", mm: this.windowMm });
+            const lit = cells.filter((c) => c.lesion).length;
+            const coverage = this.spotCells.length ? lit / this.spotCells.length : 0;
+            if (status === "close") {
+                // gentle: the skin only turns a little pink, and the doctor asks to lift the light
+                cells.forEach((c) => { if (c.red < HELPER.maxRed) this.kidSkin.addRed(c, 0.15 * sec); });
+                this.nudge("kids.help.close", time);
+            } else if (status === "far") {
+                this.nudge("kids.help.far", time);
+            } else if (coverage < 0.6) {
+                this.nudge("kids.help.aim", time);
+            } else {
+                this.shineT += sec;
+                if (this.shineT >= HELPER.shineS) this.finishShine();
+            }
+            this.updateMeter(cm, status, true);
+        },
+
+        // a hint at most every 3s, so the doctor does not repeat himself constantly
+        nudge: function (key, time) {
+            if (time - (this.lastNudge || 0) < 3000) return;
+            this.lastNudge = time;
+            this.say(i18n.t(key));
+        },
+
+        finishShine: function () {
+            this.stopShine();
+            this.helperStep = "finished";
+            this.controls.hidden = true;
+            this.meter.hidden = true;
+            this.kidSkin.setHeal(HELPER.lesion.id, 0.12); // the edges start to fill in already
+            this.kidDevice.object3D.position.copy(this.deviceRest);
+            this.kidDevice.object3D.rotation.set(0, 0, 0);
+            if (this.beam) this.beam.object3D.visible = false;
+            this.footprint.object3D.visible = false;
+            this.chime();
+            this.playClip("Jump");
+            this.refreshVr();
+            this.sayAll(["kids.help.done"]).then((finished) => {
+                if (finished && this.state === "helper") this.setState("done");
+            });
+        },
+
+        updateMeter: function (cm, status, force) {
+            const key = cm.toFixed(1) + status + Math.floor(this.shineT * 4);
+            if (key === this._meterKey && !force) return;
+            this._meterKey = key;
+            const val = this.meter.querySelector(".val");
+            val.className = "val " + status;
+            val.textContent = i18n.t("kids.help.dist." + status); // words, not only colour
+            this.meter.querySelector(".num").textContent = "(" + cm.toFixed(1) + " " + i18n.t("unit.cm") + ")";
+            this.meter.querySelector(".pin").style.left = Math.min(100, cm / 12 * 100) + "%";
+            const t = Math.min(this.shineT, HELPER.shineS);
+            this.meter.querySelector(".sec").textContent = t.toFixed(1) + " / " + HELPER.shineS + " " + i18n.t("kids.help.sec");
+            this.meter.querySelector(".fill").style.width = (t / HELPER.shineS * 100) + "%";
+            if (this.vr && this.vr.visible) this.vr.setText(this.vrText());
+        },
+
+        // desktop only: at the table, look a little down and zoom in (fov 80 -> 60) so the spot on the
+        // forearm is big enough to see. One change at the scene switch, never continuous; the mouse
+        // still looks around. In VR the headset decides the view, so nothing is changed there
+        frameView: function (atTable) {
+            if (this.el.is("vr-mode") || this.framed === atTable) return;
+            this.framed = atTable;
+            const cam = document.getElementById("cam");
+            const lc = cam && cam.components["look-controls"];
+            cam.setAttribute("camera", "fov", atTable ? 60 : 80);
+            if (lc && lc.pitchObject) {
+                lc.pitchObject.rotation.x = atTable ? -0.21 : 0;
+                lc.yawObject.rotation.y = 0;
+            }
+        },
+
+        // doctor walks to the little table for "Your turn" (instant, the camera never moves)
+        placeDoctor: function (where) {
+            if (this.doctorAt === where) return;
+            this.doctorAt = where;
+            const g = document.getElementById("guide");
+            if (!g) return;
+            g.setAttribute("position", DOCTOR[where].pos);
+            g.setAttribute("rotation", DOCTOR[where].rot);
+            // at the table the forearm on the table replaces the model's hanging right arm
+            if (this.armObj) this.armObj.visible = where !== "table";
+        },
+
+        // orange frame around the view while the child "wears" the goggles
+        gogglesView: function (on) {
+            if (on && !this.gogglesEl) {
+                const g = document.createElement("div");
+                g.className = "x0137-goggles";
+                const badge = document.createElement("span");
+                badge.textContent = i18n.t("trainer.goggles.badge");
+                g.appendChild(badge);
+                document.body.appendChild(g);
+                this.gogglesEl = g;
+            }
+            if (this.gogglesEl) this.gogglesEl.hidden = !on;
+        },
+
+        // continuous hum while the light is on, faded in and out so it never clicks
+        startHum: function () {
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx || this.humNodes) return;
+                this.audio = this.audio || new Ctx();
+                const a = this.audio, g = a.createGain(), t = a.currentTime;
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(0.035, t + 0.3);
+                g.connect(a.destination);
+                const oscs = [220, 330].map(function (f) {
+                    const o = a.createOscillator();
+                    o.type = "sine";
+                    o.frequency.value = f;
+                    o.connect(g);
+                    o.start(t);
+                    return o;
+                });
+                this.humNodes = { g: g, oscs: oscs };
+                ui.subtitle(i18n.t("kids.help.shining") + "  " + i18n.t("kids.sound.hum"));
+            } catch (e) { /* no audio: the subtitle still shows */ }
+        },
+
+        stopHum: function () {
+            if (!this.humNodes) return;
+            const a = this.audio, n = this.humNodes, t = a.currentTime;
+            n.g.gain.cancelScheduledValues(t);
+            n.g.gain.setValueAtTime(Math.max(n.g.gain.value, 0.0001), t);
+            n.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+            n.oscs.forEach(function (o) { o.stop(t + 0.35); });
+            this.humNodes = null;
+        },
+
+        // ---- VR panel: always Wait / Again / Go on + questions; height buttons while shining
+        refreshVr: function () {
+            if (!this.vr) return;
+            const b = (key, intent, primary) => ({ label: i18n.t(key), primary: !!primary, onPress: () => speech.fire(intent, "button") });
+            const q = this.questionButtons();
+            const rows = [[b("hud.wait", "wait"), b("hud.again", "again"), b("hud.next", "next", true)]];
+            if (this.state === "helper" && this.helperStep === "shine") {
+                rows.push([
+                    { label: i18n.t("trainer.btn.up"), onPress: () => this.setHeight(this.heightCm + HELPER.stepCm) },
+                    { label: i18n.t("trainer.btn.down"), onPress: () => this.setHeight(this.heightCm - HELPER.stepCm) }
+                ]);
+            } else {
+                rows.push([b(q[0].key, q[0].intent), b(q[1].key, q[1].intent)], [b(q[2].key, q[2].intent), b(q[3].key, q[3].intent)]);
+            }
+            this.vr.set(this.vrText(), rows);
+        },
+
+        vrText: function () {
+            if (this.state === "helper" && this.helperStep === "shine") {
+                const d = HELPER.distanceCm, cm = this.heightCm;
+                const status = cm < d.target - d.tol ? "close" : cm > d.target + d.tol ? "far" : "good";
+                return i18n.t("kids.vr.shine") + "\n" + i18n.t("kids.help.dist." + status) + " (" + cm.toFixed(1) + " " +
+                    i18n.t("unit.cm") + ")  " + Math.min(this.shineT, HELPER.shineS).toFixed(1) + " / " + HELPER.shineS;
+            }
+            return i18n.t("kids.vr.hint");
+        },
