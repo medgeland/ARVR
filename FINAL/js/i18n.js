@@ -20,6 +20,7 @@
             "privacy.body": "The microphone works only while you hold the mic button. The audio goes to the browser's speech service (Google in Chrome, Apple in Safari) to turn it into text. Nothing is stored. There are no accounts, no names and no health data. You can use the on-screen buttons instead of your voice.",
             "device.note": "VR works in Chrome with the Immersive Web Emulator, or in a Meta Quest browser. Other browsers, including Safari on Mac and iPhone, show a 3D page you control with the mouse, touch and buttons.",
             "credits.link": "Credits and licences",
+            "lang.label": "Language",
 
             // shared HUD
             "hud.home": "Home",
@@ -330,8 +331,9 @@
             "trainer.tip.short": "Вы держали {t} с, а нужно {target} с.",
             "trainer.tip.long": "Вы держали {t} с, дольше нужных {target} с. Слишком долгое облучение вызывает ожог.",
             "trainer.tip.burn": "Кожа покраснела — это риск ожога. Проверьте расстояние и время."
-        },
-            
+        }
+    };
+
     function readSaved() {
         try { return localStorage.getItem("x0137-lang"); } catch (e) { return null; }
     }
