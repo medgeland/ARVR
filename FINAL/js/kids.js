@@ -160,3 +160,91 @@
             this.putGoggles(false);
             this.setState("helper");
         },
+
+        // question, Wait or Again during the demo stops it; "Go on" then starts it again
+        abortDemo: function (id) {
+            if (id !== this.demoId) return;
+            this.setLight(false);
+            this.moveWand(false);
+            this.putGoggles(false);
+            if (this.state === "treatment") this.step = "ask";
+        },
+
+        putGoggles: function (on) {
+            const t = document.getElementById("table-goggles");
+            if (this.gogglesObj) this.gogglesObj.visible = on;
+            if (t) t.object3D.visible = !on;
+        },
+
+        // moves the hand piece to a point just in front of the doctor's patch (or back to rest)
+        moveWand: function (toHand) {
+            const wand = document.getElementById("kid-wand");
+            if (!wand) return Promise.resolve();
+            let to = WAND_REST;
+            if (toHand && this.patchObj) {
+                const patch = this.patchObj;
+                const target = patch.getWorldPosition(new THREE.Vector3());
+                // 9 cm in front of the patch, in the doctor's facing direction
+                const front = new THREE.Vector3(0, 0, 1).applyQuaternion(patch.getWorldQuaternion(new THREE.Quaternion()));
+                to = target.clone().addScaledVector(front, 0.09);
+                to = to.x.toFixed(3) + " " + to.y.toFixed(3) + " " + to.z.toFixed(3);
+                wand.object3D.lookAt(target);
+            } else {
+                wand.object3D.rotation.set(0, 0, 0);
+            }
+            return new Promise((resolve) => {
+                const done = () => { wand.removeEventListener("animationcomplete__move", done); resolve(); };
+                wand.addEventListener("animationcomplete__move", done);
+                wand.setAttribute("animation__move", { property: "position", to: to, dur: 1400, easing: "easeInOutSine" });
+                setTimeout(done, 1600); // safety net if the animation is paused
+            });
+        },
+        // soft light: fades in over 0.4 s, stays, fades out; never flashes
+        setLight: function (on) {
+            const face = document.getElementById("kid-wand-light");
+            const glow = document.getElementById("kid-wand-glow");
+            if (face) face.setAttribute("animation__glow", { property: "material.emissiveIntensity", to: on ? 1 : 0.2, dur: 400, easing: "easeInOutSine" });
+            if (glow) glow.setAttribute("animation__glow", { property: "light.intensity", to: on ? 0.8 : 0, dur: 400, easing: "easeInOutSine" });
+            this.setPatchColor(on ? "#d6e4ff" : this.patchColor(this.healProgress || 0));
+            if (on) this.hum(2.6);
+        },
+
+        // quiet two-tone hum (Web Audio), ramped so it never clicks
+        hum: function (seconds) {
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return;
+                this.audio = this.audio || new Ctx();
+                const a = this.audio, g = a.createGain(), t = a.currentTime;
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(0.035, t + 0.4);
+                g.gain.setValueAtTime(0.035, t + seconds - 0.5);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + seconds);
+                g.connect(a.destination);
+                [220, 330].forEach(function (f) {
+                    const o = a.createOscillator();
+                    o.type = "sine";
+                    o.frequency.value = f;
+                    o.connect(g);
+                    o.start(t);
+                    o.stop(t + seconds + 0.05);
+                });
+            } catch (e) { /* no audio: the subtitle still shows */ }
+        },
+
+        chime: function () {
+            try {
+                if (!this.audio) return; // only after hum has unlocked audio
+                const a = this.audio, o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+                o.type = "sine";
+                o.frequency.value = 880;
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(0.04, t + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+                o.connect(g).connect(a.destination);
+                o.start(t);
+                o.stop(t + 0.55);
+            } catch (e) { /* ignore */ }
+        },
+
+        
