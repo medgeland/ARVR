@@ -225,3 +225,141 @@
             panel.hide = function () { panel.visible = false; panel.render(); };
             return panel;
         },
+
+        // A-Frame's mouse cursor aims its ray only on mousemove, so a click with no move before it
+        // (trackpad tap, fast click) can miss. Re-aim on every press, before the cursor handles it.
+        _aimOnPress: function () {
+            const scene = document.querySelector("a-scene");
+            if (!scene) return;
+            const aim = function (e) {
+                const cursor = scene.components.cursor, rc = scene.components.raycaster;
+                if (!cursor || !rc || e.target !== scene.canvas || e.pointerType === "touch") return;
+                cursor.onMouseMove(e);
+                rc.checkIntersections();
+            };
+            // A-Frame 1.8's cursor reacts to pointerdown (which fires before mousedown)
+            window.addEventListener("pointerdown", aim, true);
+            window.addEventListener("mousedown", aim, true);
+        },
+
+        _listen: function () {
+            window.addEventListener("x0137-say", (e) => this.subtitle(e.detail.text));
+            window.addEventListener("x0137-heard", (e) => {
+                this.heardEl.textContent = e.detail.text ? i18n.t("hud.heard") + " " + e.detail.text : "";
+            });
+            window.addEventListener("x0137-speech-status", (e) => {
+                const s = e.detail.state;
+                this.statusEl.textContent = s === "listening" || s === "idle" ? "" : e.detail.message;
+                if (s === "listening") this.heardEl.textContent = "";
+                if (s === "denied" || s === "network" || s === "unsupported") this.mic.hidden = true;
+                if (s === "nomatch" || s === "nospeech" || s === "denied" || s === "network") this.lightButtons();
+            });
+        }
+    };
+
+    window.X0137_UI = ui;
+    // x0137-label: text drawn on a canvas (Arial) and shown on a plane. A-Frame's built-in a-text font
+    // has no Cyrillic letters, so every in-scene text that can be Russian uses this instead.
+    if (window.AFRAME) {
+        AFRAME.registerComponent("x0137-label", {
+            schema: {
+                value: { type: "string", default: "" },
+                width: { default: 0.6 },              // plane width in metres; height follows the text
+                color: { type: "color", default: "#1a237e" },
+                background: { type: "string", default: "" },   // "" = transparent
+                fontSize: { default: 64 },            // px on the canvas (1024 px wide)
+                align: { default: "center" },
+                bold: { default: true },
+                anchor: { default: "center" }         // "top" = the entity position is the top edge
+            },
+            init: function () {
+                this.canvas = document.createElement("canvas");
+                this.texture = new THREE.CanvasTexture(this.canvas);
+                this.texture.colorSpace = THREE.SRGBColorSpace;
+                this.texture.anisotropy = 4;
+                this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+                this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.material);
+                this.el.setObject3D("mesh", this.mesh);
+            },
+            update: function () {
+                const d = this.data, W = 1024, pad = d.fontSize * 0.4;
+                const ctx = this.canvas.getContext("2d");
+                const font = (d.bold ? "bold " : "") + d.fontSize + "px Arial, Helvetica, sans-serif";
+                ctx.font = font;
+                // word wrap, keeping manual line breaks
+                const lines = [];
+                String(d.value).split("\n").forEach(function (para) {
+                    let line = "";
+                    para.split(" ").forEach(function (word) {
+                        const test = line ? line + " " + word : word;
+                        if (ctx.measureText(test).width > W - pad * 2 && line) { lines.push(line); line = word; }
+                        else line = test;
+                    });
+                    lines.push(line);
+                });
+                const lh = d.fontSize * 1.25;
+                const H = Math.max(1, Math.ceil(lines.length * lh + pad * 2));
+                this.canvas.width = W;
+                this.canvas.height = H;
+                ctx.clearRect(0, 0, W, H);
+                if (d.background) { ctx.fillStyle = d.background; ctx.fillRect(0, 0, W, H); }
+                ctx.font = font;
+                ctx.fillStyle = d.color;
+                ctx.textBaseline = "middle";
+                ctx.textAlign = d.align;
+                const x = d.align === "left" ? pad : d.align === "right" ? W - pad : W / 2;
+                lines.forEach(function (l, i) { ctx.fillText(l, x, pad + lh * (i + 0.5)); });
+                this.texture.needsUpdate = true;
+                this.mesh.scale.set(d.width, d.width * H / W, 1);
+                this.mesh.position.y = d.anchor === "top" ? -d.width * H / W / 2 : 0;
+                this.mesh.visible = !!d.value;
+            },
+            remove: function () {
+                this.texture.dispose();
+                this.material.dispose();
+                this.el.removeObject3D("mesh");
+            }
+        });
+    }
+
+    // x0137-texture: loads a texture with repeat; if the file is missing the plain colour stays,
+    // so the scene still works before the textures are added. (Pattern from my PA4 x0137-texture.)
+    if (window.AFRAME) {
+        AFRAME.registerComponent("x0137-texture", {
+            schema: {
+                src: { type: "string" },
+                repeat: { type: "vec2", default: { x: 1, y: 1 } },
+                color: { type: "color", default: "#dddddd" },  // used when there is no texture
+                tint: { type: "color", default: "#ffffff" }    // multiplied with the texture
+            },
+            init: function () {
+                const data = this.data;
+                this.el.setAttribute("material", "color", data.color);
+                if (!data.src) return;
+                new THREE.TextureLoader().load(data.src, (tex) => {
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(data.repeat.x, data.repeat.y);
+                    tex.colorSpace = THREE.SRGBColorSpace;
+                    tex.anisotropy = 8;
+                    this.texture = tex;
+                    this.apply();
+                    this.el.addEventListener("object3dset", () => this.apply());
+                }, undefined, function () {
+                    console.info("x0137-texture: " + data.src + " not found, using colour " + data.color);
+                });
+            },
+            apply: function () {
+                const mesh = this.el.getObject3D("mesh");
+                if (!mesh || !this.texture) return;
+                const tex = this.texture, tint = this.data.tint;
+                mesh.traverse(function (node) {
+                    if (node.material) {
+                        node.material.map = tex;
+                        node.material.color.set(tint);
+                        node.material.needsUpdate = true;
+                    }
+                });
+            }
+        });
+    }
+})();
