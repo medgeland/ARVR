@@ -802,3 +802,130 @@
             }
             return i18n.t("kids.vr.hint");
         },
+
+
+        // done: time-lapse
+        showDone: function () {
+            this.putGoggles(false);
+            if (this.kidSkin) { this.kidSkin.cells.forEach((c) => { c.red = 0; }); this.kidSkin.dirty = true; }
+            if (this.towel) this.towel.object3D.visible = false;   // the cloth comes off, so the spot is easy to see
+            this.buildParentCard();
+            this.playTimelapse();
+            this.sayAll(["kids.timelapse"]);
+        },
+
+        // Visit 1 .. Visit 6: the white patches fill in from the edges, one step every 1.7s
+        playTimelapse: function () {
+            clearInterval(this.lapseTimer);
+            const label = document.getElementById("kids-done-label");
+            let visit = 1;
+            const show = () => {
+                const progress = (visit - 1) / (VISITS - 1);
+                this.healProgress = progress;
+                // the spot the child treated fills in, visit by visit
+                if (this.kidSkin) this.kidSkin.setHeal(HELPER.lesion.id, Math.max(0.12, progress));
+                if (label) label.setAttribute("x0137-label", "value", fmt("kids.visit", { n: visit, m: VISITS }));
+                if (visit > 1) this.chime();
+            };
+            show();
+            this.lapseTimer = setInterval(() => {
+                if (this.state !== "done") { clearInterval(this.lapseTimer); return; }
+                visit++;
+                show();
+                if (visit >= VISITS) {
+                    clearInterval(this.lapseTimer);
+                    this.playClip("Jump");
+                    this.sayAll(["kids.done.title", "kids.done.parent"]);
+                }
+            }, 1700);
+        },
+
+        // doctor's own patch: pale -> skin colour
+        patchColor: function (progress) {
+            return "#" + new THREE.Color("#fbefe4").lerp(new THREE.Color("#e8b98f"), progress).getHexString();
+        },
+
+        buildParentCard: function () {
+            this.removeParentCard();
+            const card = document.createElement("div");
+            card.className = "x0137-box x0137-parent";
+            const h = document.createElement("h2");
+            h.textContent = i18n.t("kids.parent.title");
+            const ol = document.createElement("ol");
+            for (let i = 1; i <= 5; i++) {
+                const li = document.createElement("li");
+                li.textContent = i18n.t("kids.parent." + i);
+                ol.appendChild(li);
+            }
+            const again = document.createElement("button");
+            again.type = "button";
+            again.className = "x0137-btn home";
+            again.textContent = i18n.t("kids.btn.again");
+            again.addEventListener("click", () => this.setState("waiting"));
+            card.append(h, ol, again);
+            ui.topRight.appendChild(card);
+            this.parentCard = card;
+        },
+
+        removeParentCard: function () {
+            if (this.parentCard) this.parentCard.remove();
+            this.parentCard = null;
+        },
+
+        onIntent: function (e) {
+            const name = e.detail.name;
+            if (name === "wait" || name === "again") this.countPacing(name);
+
+            if (name === "wait") {
+                this.paused = true;
+                this.stopShine();
+                speech.cancelSpeech();
+                this.guideMotion(false);
+                return;
+            }
+            this.guideMotion(true);
+            if (name === "again") {
+                this.paused = false;
+                this.say(this.lastLine);
+                return;
+            }
+            if (name.indexOf("q_") === 0) {
+                // answer first, then the story goes on where it was
+                this.paused = false;
+                this.say(i18n.t("kids.a." + name.slice(2)));
+                return;
+            }
+            if (name === "next") {
+                this.paused = false;
+                if (this.state === "waiting") this.setState("treatment");
+                else if (this.state === "treatment" && this.step === "ask") this.runDemo();
+                else if (this.state === "treatment" && this.step === "demo") this.setState("helper");
+                else if (this.state === "helper" && this.helperStep === "finished") this.setState("done");
+                else if (this.state === "done") this.setState("waiting");
+            }
+        },
+
+        // 2 or more wait/again in one state -> slower speech, shorter pieces
+        countPacing: function (name) {
+            const key = this.state + ":" + name;
+            this.counts[key] = (this.counts[key] || 0) + 1;
+            const total = (this.counts[this.state + ":wait"] || 0) + (this.counts[this.state + ":again"] || 0);
+            if (total >= 2) speech.slowDown();
+        },
+
+        // one line, interrupting whatever was being said
+        say: function (text) {
+            this.gen = (this.gen || 0) + 1;
+            return this._speak(text);
+        },
+
+        _speak: function (text) {
+            if (!text) return Promise.resolve();
+            this.lastLine = text;
+            // the doctor nods while talking, unless a one-off clip (Wave, Jump) is playing
+            if (this.clip === "Idle") this.playClip("Talk");
+            return speech.say(text, { split: speech.rate < 1 }).then((r) => {
+                if (this.clip === "Talk") this.playClip("Idle");
+                return r;
+            });
+        },
