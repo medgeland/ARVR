@@ -332,4 +332,44 @@
             "trainer.tip.burn": "Кожа покраснела — это риск ожога. Проверьте расстояние и время."
         },
             
-        }})
+    function readSaved() {
+        try { return localStorage.getItem("x0137-lang"); } catch (e) { return null; }
+    }
+
+    function pickLang() {
+        const fromUrl = new URLSearchParams(window.location.search).get("lang");
+        if (fromUrl === "ru" || fromUrl === "en") return fromUrl;
+        const saved = readSaved();
+        if (saved === "ru" || saved === "en") return saved;
+        return (navigator.language || "").toLowerCase().indexOf("ru") === 0 ? "ru" : "en";
+    }
+
+    const i18n = {
+        lang: pickLang(),
+        // t("key") returns the line in the current language, then English, then the key itself
+        t: function (key) {
+            const table = STRINGS[this.lang] || STRINGS.en;
+            return table[key] || STRINGS.en[key] || key;
+        },
+        setLang: function (lang) {
+            if (lang !== "ru" && lang !== "en") return;
+            this.lang = lang;
+            try { localStorage.setItem("x0137-lang", lang); } catch (e) { /* private mode: ignore */ }
+            document.documentElement.lang = lang;
+            this.apply();
+        },
+        // speech recognition / synthesis language code
+        speechLang: function () {
+            return this.lang === "ru" ? "ru-RU" : "en-US";
+        },
+        // fills every element with data-i18n="key"
+        apply: function (root) {
+            (root || document).querySelectorAll("[data-i18n]").forEach(function (el) {
+                el.textContent = i18n.t(el.getAttribute("data-i18n"));
+            });
+        }
+    };
+
+    document.documentElement.lang = i18n.lang;
+    window.X0137_I18N = i18n;
+})();
