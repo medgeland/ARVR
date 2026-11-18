@@ -383,3 +383,60 @@
             this.say(fmt("trainer.result.score", { n: passed, m: checks.length }));
             this.refreshVr();
         },
+
+        // INTENTS
+        onIntent: function (name) {
+            if (name === "wait") { speech.cancelSpeech(); this.stopExpose(); return; }
+            if (name === "again") { this.say(this.lastLine); return; }
+            if (name === "q_goggles") { this.say(i18n.t("trainer.tip.goggles")); return; }
+            if (name === "q_nozzle") {
+                this.say(fmt("trainer.q.nozzle", { spot: CONFIG.spots[0].diameterMm }));
+                return;
+            }
+            if (name === "q_time") { this.say(fmt("trainer.q.time", { target: CONFIG.timeS.target })); return; }
+            if (name === "start" || name === "next") {
+                if (this.state === "intro") {
+                    if (!this.done.goggles) { this.warn(i18n.t("trainer.warn.goggles")); return; }
+                    // unfinished steps: the first press lists them, a second press goes on anyway
+                    const missing = ["sunscreen", "vitamin", "towel", "nozzle"].filter((st) =>
+                        !(this.done[st] || (st === "vitamin" && this.vitaminTaken !== null)));
+                    if (missing.length && !this.startWarned) {
+                        this.startWarned = true;
+                        this.warn(fmt("trainer.warn.missing", { list: missing.map((st) => i18n.t("trainer.check." + st)).join(", ") }));
+                        return;
+                    }
+                    this.setState("treat");
+                } else if (this.state === "treat" && name === "start") {
+                    this.startExpose("voice");
+                }
+            }
+        },
+
+        say: function (text) {
+            if (!text) return Promise.resolve();
+            this.lastLine = text;
+            return speech.say(text);
+        },
+
+        warn: function (text) {
+            this.beep();
+            this.say(text);
+        },
+
+        // soft warning beep (Web Audio); every beep comes with a subtitle
+        beep: function () {
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return;
+                this.audio = this.audio || new Ctx();
+                const a = this.audio, o = a.createOscillator(), g = a.createGain();
+                o.type = "sine";
+                o.frequency.value = 660;
+                g.gain.setValueAtTime(0.0001, a.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.08, a.currentTime + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.25);
+                o.connect(g).connect(a.destination);
+                o.start();
+                o.stop(a.currentTime + 0.3);
+            } catch (e) { /* no audio: the subtitle still shows */ }
+        },
