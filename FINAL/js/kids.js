@@ -425,3 +425,136 @@
             this.updateGuide();
             this.refreshVr();
         },
+        // sunscreen: take cream from the tube, then click each mole
+        takeCream: function () {
+            if (this.helperStep !== "cream") { this.stepHint(); return; }
+            this.creamReady = true;
+            const tube = document.getElementById("kid-tube");
+            tube.setAttribute("animation__take", { property: "position", from: "-0.15 0.06 0", to: "-0.15 0.022 0", dur: 500, easing: "easeOutQuad" });
+            this.say(i18n.t("kids.help.cream.took"));
+            this.updateGuide();
+        },
+
+        coverMole: function (i) {
+            const m = this.moles[i];
+            if (!m || m.dataset.covered) return;
+            if (this.helperStep !== "cream") { this.stepHint(); return; }
+            if (!this.creamReady) { this.say(i18n.t("kids.help.cream.first")); return; }
+            m.dataset.covered = "1";
+            m.setAttribute("color", "#ffffff");                 // a white blob of cream
+            m.components["x0137-explorable"].base.set(2, 2.4, 2);
+            m.object3D.scale.set(2, 2.4, 2);
+            const n = this.moles.filter((x) => x.dataset.covered).length;
+            if (n < this.moles.length) {
+                this.say(fmt("kids.help.cream.mole", { n: n, m: this.moles.length }));
+            } else {
+                this.helperStep = "towel";
+                this.sayAll(["kids.help.towel"]);
+            }
+            this.updateGuide();
+        },
+
+        // the cloth covers the healthy skin; only the spot stays open
+        layTowel: function () {
+            if (this.helperStep !== "towel") { this.stepHint(); return; }
+            document.getElementById("kid-cloth").object3D.visible = false;
+            this.towel.object3D.visible = true;
+            this.helperStep = "window";
+            this.sayAll(["kids.help.towelDone"]);
+            this.updateGuide();
+        },
+
+        // what to do now, when the child clicks something out of order
+        stepHint: function () {
+            const st = this.helperStep;
+            const key = st === "goggles" ? "kids.help.gogglesFirst" :
+                        st === "cream" ? (this.creamReady ? "kids.help.cream.took" : "kids.help.cream.first") :
+                        st === "towel" ? "kids.help.towelFirst" :
+                        st === "window" ? "kids.help.windowFirst" : null;
+            if (key) this.say(i18n.t(key));
+        },
+
+        buildTowel: function () {
+            const c = this.spotCentre, d = this.kidSkin.data;
+            const half = HELPER.towelHoleMm / 2000;
+            this.kidSkin.setTowel({ x: c.x, z: c.z, half: half });
+            const y = d.top0 + 0.006, zMax = d.halfW0 + 0.012;
+            const t = document.createElement("a-entity");
+            t.object3D.visible = false;
+            [[d.x0, c.x - half, -zMax, zMax], [c.x + half, d.x1, -zMax, zMax],
+             [c.x - half, c.x + half, -zMax, c.z - half], [c.x - half, c.x + half, c.z + half, zMax]].forEach(function (p) {
+                const b = document.createElement("a-box");
+                b.setAttribute("width", p[1] - p[0]);
+                b.setAttribute("depth", p[3] - p[2]);
+                b.setAttribute("height", 0.004);
+                b.setAttribute("position", ((p[0] + p[1]) / 2) + " " + y + " " + ((p[2] + p[3]) / 2));
+                b.setAttribute("color", "#f5f5f0");
+                t.appendChild(b);
+            });
+            this.kidArm.appendChild(t);
+            this.towel = t;
+        },
+
+        // bobbing orange arrow above the thing to click next
+        buildArrow: function () {
+            const a = document.createElement("a-entity");
+            const bob = document.createElement("a-entity");
+            bob.setAttribute("animation", "property: position; from: 0 0.015 0; to: 0 0 0; dir: alternate; loop: true; dur: 600; easing: easeInOutSine");
+            const cone = document.createElement("a-cone");
+            cone.setAttribute("radius-bottom", 0.016);
+            cone.setAttribute("radius-top", 0);
+            cone.setAttribute("height", 0.03);
+            cone.setAttribute("rotation", "180 0 0");
+            cone.setAttribute("color", "#f9a825");
+            const stem = document.createElement("a-box");
+            stem.setAttribute("width", 0.01);
+            stem.setAttribute("height", 0.026);
+            stem.setAttribute("depth", 0.01);
+            stem.setAttribute("position", "0 0.028 0");
+            stem.setAttribute("color", "#f9a825");
+            bob.append(cone, stem);
+            a.appendChild(bob);
+            a.object3D.visible = false;
+            this.el.appendChild(a);
+            this.arrow = a;
+        },
+
+        updateGuide: function () {
+            if (!this.arrow) return;
+            let target = null;
+            if (this.state === "helper") {
+                const st = this.helperStep;
+                if (st === "goggles") target = document.getElementById("kid-goggles");
+                else if (st === "cream") target = this.creamReady ? (this.moles || []).find((m) => !m.dataset.covered) : document.getElementById("kid-tube");
+                else if (st === "towel") target = document.getElementById("kid-cloth");
+                else if (st === "window") target = document.querySelector("#kid-tray [x0137-explorable='name: window:w16']") || document.getElementById("kid-tray");
+            }
+            if (!target) { this.arrow.object3D.visible = false; return; }
+            const p = target.object3D.getWorldPosition(new THREE.Vector3());
+            const small = (this.moles || []).indexOf(target) !== -1;
+            this.arrow.object3D.position.set(p.x, p.y + (small ? 0.035 : 0.06), p.z);
+            this.arrow.object3D.visible = true;
+        },
+
+        pickWindow: function (id) {
+            if (this.helperStep === "finished") return;
+            if (this.helperStep !== "window" && this.helperStep !== "shine") { this.stepHint(); return; }
+            const w = HELPER.windows.find((x) => x.id === id);
+            if (!w) return;
+            this.windowMm = w.mm;
+            this.shapeWindow(w.mm);
+            if (w.mm < HELPER.lesion.diameterMm) {
+                this.helperStep = "window";
+                this.controls.hidden = true;
+                this.meter.hidden = true;
+                this.say(i18n.t("kids.help.small"));
+            } else {
+                this.helperStep = "shine";
+                this.controls.hidden = false;
+                this.meter.hidden = false;
+                this.sayAll(["kids.help.right", "kids.help.shine"]);
+            }
+            this.updateGuide();
+            this.refreshVr();
+        },
+        
