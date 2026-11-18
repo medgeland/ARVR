@@ -54,4 +54,55 @@
         return i18n.t(key).replace(/\{(\w+)\}/g, function (m, k) { return vals[k] != null ? vals[k] : m; });
     }
 
-    
+    AFRAME.registerSystem("x0137-trainer", {
+        init: function () {
+            this.config = CONFIG;
+            this.state = null;
+            this.done = {};
+            this.vitaminTaken = null;
+            this.moles = [];
+            this.molesCovered = 0;
+            this.towelOn = false;
+            this.nozzle = null;
+            this.lastLine = "";
+            this.heightCm = CONFIG.startHeightCm;
+            this.aim = null; // {x, z} on the arm, local metres
+            this.exposing = false;
+            this.exposeSource = null;
+            this.stats = null;
+            this.lastBeep = 0;
+
+            window.addEventListener("x0137-intent", (e) => this.onIntent(e.detail.name));
+            window.addEventListener("x0137-nomatch", () => this.say(i18n.t("speech.nomatch")));
+
+            this.el.addEventListener("loaded", () => {
+                speech.init({ intents: ["wait", "again", "next", "start", "q_goggles", "q_nozzle", "q_time"] });
+                ui.init({ questions: [] });
+                this.arm = document.getElementById("arm");
+                this.skinEl = document.getElementById("skin");
+                this.skin = this.skinEl.components["x0137-voxel-skin"];
+                this.device = document.getElementById("device");
+                this.restPosition = this.device.object3D.position.clone();
+                this.buildArrow();
+                // VR panel to the left of the table, tilted toward the seated user
+                this.vr = ui.vrPanel({ position: "-0.55 1.3 -0.25", rotation: "-10 52 0", width: 0.44, textHeight: 0.13 });
+                this.buildChecklist();
+                this.buildMeter();
+                this.buildSpot();
+                this.buildRuler();
+                this.buildTowel();
+                this.buildNozzles();
+                this.buildDeviceParts();
+                this.bindInput();
+                this.lookDown();
+                this.setState("intro");
+            });
+            this.el.addEventListener("enter-vr", () => {
+                this.vrSubtitle(true);
+                if (this.vr) { this.vr.show(); this.refreshVr(); }
+            });
+            this.el.addEventListener("exit-vr", () => {
+                this.vrSubtitle(false);
+                if (this.vr) this.vr.hide();
+            });
+        },
