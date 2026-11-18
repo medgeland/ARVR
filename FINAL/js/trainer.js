@@ -107,7 +107,7 @@
             });
         },
 
-        
+
         // states
         setState: function (state) {
             this.state = state;
@@ -129,3 +129,60 @@
                 this.showResult();
             }
         },
+
+        // INTRODUCTION: tools
+        use: function (name, el) {
+            if (this.state === "result") return;
+            if (name === "goggles") {
+                el.object3D.visible = false;
+                this.gogglesView(true);
+                this.say(i18n.t("trainer.goggles.on"));
+                this.markDone("goggles");
+            } else if (name === "tube") {
+                // step 1 of sunscreen: take cream from the tube
+                this.creamReady = true;
+                el.setAttribute("animation__take", { property: "position", from: "-0.1 0.83 -0.34", to: "-0.1 0.79 -0.34", dur: 500, easing: "easeOutQuad" });
+                this.say(i18n.t("trainer.cream.took"));
+                this.updateGuide();
+            } else if (name === "mole") {
+                if (el.dataset.covered) return;
+                if (!this.creamReady) { this.say(i18n.t("trainer.cream.first")); return; }
+                // step 2: a visible white blob of cream over the mole
+                el.dataset.covered = "1";
+                el.setAttribute("color", "#ffffff");
+                el.components["x0137-tool"].base.set(2.2, 2.4, 2.2);
+                el.object3D.scale.set(2.2, 2.4, 2.2);
+                this.molesCovered++;
+                this.say(fmt("trainer.cream.mole", { n: this.molesCovered, m: this.moles.length }));
+                if (this.molesCovered >= this.moles.length) this.markDone("sunscreen");
+                else this.updateGuide();
+            } else if (name === "towel") {
+                el.object3D.visible = false;
+                this.towelOn = true;
+                this.towel.object3D.visible = true;
+                this.markDone("towel");
+            } else if (name.indexOf("nozzle:") === 0) {
+                this.pickNozzle(name.slice(7));
+            }
+        },
+
+        // rule: the smallest nozzle that still covers the whole spot
+        bestNozzle: function (spot) {
+            const fits = CONFIG.nozzles.filter((n) => n.mm >= spot.diameterMm);
+            fits.sort((a, b) => a.mm - b.mm);
+            return fits[0] || CONFIG.nozzles[CONFIG.nozzles.length - 1];
+        },
+
+        pickNozzle: function (id) {
+            const n = CONFIG.nozzles.find((x) => x.id === id);
+            if (!n) return;
+            this.nozzle = n;
+            this.shapeNozzle(n);
+            if (n.mm === this.bestNozzle(CONFIG.spots[0]).mm) this.markDone("nozzle");
+            else this.unmarkDone("nozzle");
+        },
+
+        markDone: function (step) { this.done[step] = true; this.renderChecklist(); },
+        unmarkDone: function (step) { delete this.done[step]; this.renderChecklist(); },
+
+        
