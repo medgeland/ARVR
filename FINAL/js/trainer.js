@@ -745,3 +745,236 @@
                 this.screen.setAttribute("value", v);
             }
         },
+
+        // HUD panels
+        buildMeter: function () {
+            const m = document.createElement("div");
+            m.className = "x0137-box x0137-meter";
+            m.hidden = true;
+            m.innerHTML = '<div><span class="lbl"></span>: <b class="val"></b> <span class="num"></span></div>' +
+                '<div class="bar"><div class="band"></div><div class="pin"></div></div>';
+            m.querySelector(".lbl").textContent = i18n.t("trainer.dist.label");
+            const max = 12, d = CONFIG.distanceCm;
+            const band = m.querySelector(".band");
+            band.style.left = ((d.target - d.tol) / max * 100) + "%";
+            band.style.width = (2 * d.tol / max * 100) + "%";
+            ui.subEl.parentNode.insertBefore(m, ui.subEl);
+            this.meter = m;
+        },
+
+        updateMeter: function (cm, status) {
+            const key = cm.toFixed(1) + status;
+            if (key === this._meterKey) return;
+            this._meterKey = key;
+            const val = this.meter.querySelector(".val");
+            val.className = "val " + status;
+            val.textContent = i18n.t("trainer.dist." + status);   // a word, not only a colour
+            this.meter.querySelector(".num").textContent = "(" + cm.toFixed(1) + " " + i18n.t("unit.cm") + ")";
+            this.meter.querySelector(".pin").style.left = Math.min(100, cm / 12 * 100) + "%";
+            if (this.vr && this.vr.visible && this.state === "treat") this.vr.setText(this.vrTreatText(cm, status));
+        },
+
+        buildChecklist: function () {
+            const style = document.createElement("style");
+            style.textContent = CSS;
+            document.head.appendChild(style);
+            this.checkEl = document.createElement("div");
+            this.checkEl.className = "x0137-box x0137-check";
+            ui.topRight.appendChild(this.checkEl);
+            this.renderChecklist();
+        },
+
+        renderChecklist: function () {
+            if (!this.checkEl) return;
+            const self = this;
+            this.checkEl.innerHTML = "";
+            const h = document.createElement("h2");
+            h.textContent = i18n.t("trainer.checklist");
+            const ol = document.createElement("ol");
+            const current = this.currentStep();
+            CONFIG.steps.forEach(function (step, i) {
+                const li = document.createElement("li");
+                const ok = !!self.done[step];
+                li.className = ok ? "done" : "";
+                const mark = document.createElement("span");
+                mark.className = "mark";
+                // step number, replaced by a text tick when done (a sign, never colour alone)
+                mark.textContent = ok ? "✓" : (i + 1) + ".";
+                const label = document.createElement("span");
+                label.textContent = i18n.t("trainer.step." + step);
+                li.append(mark, label);
+                ol.appendChild(li);
+                // the current step is highlighted and says exactly what to click
+                if (step === current) {
+                    li.classList.add("now");
+                    const hint = document.createElement("div");
+                    hint.className = "hint";
+                    hint.textContent = fmt(self.state === "intro" && (step === "distance" || step === "time")
+                        ? "trainer.hint.start" : "trainer.hint." + step, { spot: CONFIG.spots[0].diameterMm });
+                    ol.appendChild(hint);
+                }
+                // vitamin E is a question, not an object in the scene
+                if (step === "vitamin" && self.vitaminTaken === null) {
+                    const ask = document.createElement("div");
+                    ask.className = "ask";
+                    [["trainer.vitamin.yes", true], ["trainer.vitamin.no", false]].forEach(function (pair) {
+                        const b = document.createElement("button");
+                        b.type = "button";
+                        b.textContent = i18n.t(pair[0]);
+                        b.addEventListener("click", function () { self.answerVitamin(pair[1]); });
+                        ask.appendChild(b);
+                    });
+                    ol.appendChild(ask);
+                }
+            });
+            this.checkEl.append(h, ol);
+            this.updateGuide();
+            this.refreshVr();
+        },
+
+        // the first step not handled yet (a "Not yet" answer to vitamin E counts as handled)
+        currentStep: function () {
+            return CONFIG.steps.find((s) => !(this.done[s] || (s === "vitamin" && this.vitaminTaken !== null))) || null;
+        },
+
+        // a bobbing arrow above the object the current step needs
+        updateGuide: function () {
+            if (!this.arrow) return;
+            const step = this.currentStep();
+            let target = null;
+            if (this.state === "intro" || this.state === "treat") {
+                if (step === "goggles") target = document.querySelector("[x0137-tool='name: goggles']");
+                else if (step === "sunscreen") target = this.creamReady ? this.moles.find((m) => !m.dataset.covered) : document.getElementById("tube");
+                else if (step === "towel") target = document.querySelector("[x0137-tool='name: towel']");
+                else if (step === "nozzle") target = document.getElementById("nozzle-tray");
+            }
+            if (!target) { this.arrow.object3D.visible = false; return; }
+            const p = target.object3D.getWorldPosition(new THREE.Vector3());
+            if (target.id === "nozzle-tray") p.x += 0.12;
+            const small = target.dataset && target.classList.contains("mole");
+            this.arrow.object3D.position.set(p.x, p.y + (small ? 0.03 : 0.07), p.z);
+            this.arrow.object3D.visible = true;
+        },
+
+        buildArrow: function () {
+            const a = document.createElement("a-entity");
+            const bob = document.createElement("a-entity");
+            bob.setAttribute("animation", "property: position; from: 0 0.012 0; to: 0 0 0; dir: alternate; loop: true; dur: 600; easing: easeInOutSine");
+            const cone = document.createElement("a-cone");
+            cone.setAttribute("radius-bottom", 0.012);
+            cone.setAttribute("radius-top", 0);
+            cone.setAttribute("height", 0.022);
+            cone.setAttribute("rotation", "180 0 0");
+            cone.setAttribute("color", "#f9a825");
+            const stem = document.createElement("a-box");
+            stem.setAttribute("width", 0.008);
+            stem.setAttribute("height", 0.02);
+            stem.setAttribute("depth", 0.008);
+            stem.setAttribute("position", "0 0.021 0");
+            stem.setAttribute("color", "#f9a825");
+            bob.append(cone, stem);
+            a.appendChild(bob);
+            a.object3D.visible = false;
+            this.el.appendChild(a);
+            this.arrow = a;
+        },
+
+        // what the goggles change: an orange frame around the view + a "Goggles on" badge
+        gogglesView: function (on) {
+            if (on && !this.gogglesEl) {
+                const g = document.createElement("div");
+                g.className = "x0137-goggles";
+                const badge = document.createElement("span");
+                badge.textContent = i18n.t("trainer.goggles.badge");
+                g.appendChild(badge);
+                document.body.appendChild(g);
+                this.gogglesEl = g;
+            }
+            if (this.gogglesEl) this.gogglesEl.hidden = !on;
+        },
+
+        // desktop: start looking down at the arm (in VR the headset decides)
+        lookDown: function () {
+            const cam = document.getElementById("cam");
+            const lc = cam && cam.components["look-controls"];
+            if (lc && lc.pitchObject) lc.pitchObject.rotation.x = -0.95;
+        },
+
+        // ---- VR panel content for the current state ----
+        refreshVr: function () {
+            if (!this.vr || !this.vr.visible) return;
+            const btn = (key, onPress, primary) => ({ label: i18n.t(key), onPress: onPress, primary: !!primary });
+            if (this.state === "intro") {
+                const step = this.currentStep();
+                const text = step ? i18n.t("trainer.step." + step) + "\n" +
+                    fmt(step === "distance" || step === "time" ? "trainer.hint.start" : "trainer.hint." + step, { spot: CONFIG.spots[0].diameterMm }) : "";
+                const rows = [];
+                if (this.vitaminTaken === null) {
+                    rows.push([btn("trainer.vitamin.yes", () => this.answerVitamin(true)), btn("trainer.vitamin.no", () => this.answerVitamin(false))]);
+                }
+                rows.push([btn("trainer.btn.start", () => speech.fire("start", "button"), true)]);
+                this.vr.set(text, rows);
+            } else if (this.state === "treat") {
+                this.vr.set(this.vrTreatText(this.heightCm, null), [[
+                    btn("trainer.btn.up", () => this.setHeight(this.heightCm + CONFIG.heightStepCm)),
+                    btn("trainer.btn.down", () => this.setHeight(this.heightCm - CONFIG.heightStepCm))
+                ]]);
+            } else if (this.state === "result") {
+                this.vr.set(this.resultText || "", [[btn("trainer.btn.retry", () => window.location.reload(), true)]], 0.3);
+            }
+        },
+
+        vrTreatText: function (cm, status) {
+            const d = CONFIG.distanceCm;
+            status = status || (cm < d.target - d.tol ? "close" : cm > d.target + d.tol ? "far" : "good");
+            return i18n.t("trainer.vr.treat") + "\n" + i18n.t("trainer.dist.label") + ": " +
+                i18n.t("trainer.dist." + status) + " (" + cm.toFixed(1) + " " + i18n.t("unit.cm") + ")";
+        },
+
+        answerVitamin: function (taken) {
+            this.vitaminTaken = taken;
+            if (taken) this.markDone("vitamin");
+            else { this.renderChecklist(); this.say(i18n.t("trainer.tip.vitamin")); }
+        },
+
+        vrSubtitle: function (on) {
+            const t = document.getElementById("x0137-vr-subtitle");
+            if (t) t.setAttribute("visible", on);
+        }
+    });
+
+    // a nozzle filter: grey square plate with a blue round or square opening
+    function nozzleMesh(n, plateSize) {
+        const s = n.mm / 1000;
+        const g = document.createElement("a-entity");
+        const plate = document.createElement("a-box");
+        plate.setAttribute("width", plateSize);
+        plate.setAttribute("height", 0.006);
+        plate.setAttribute("depth", plateSize);
+        plate.setAttribute("color", "#8a939c");
+        const hole = document.createElement(n.shape === "round" ? "a-cylinder" : "a-box");
+        if (n.shape === "round") { hole.setAttribute("radius", s / 2); }
+        else { hole.setAttribute("width", s); hole.setAttribute("depth", s); }
+        hole.setAttribute("height", 0.0065);
+        hole.setAttribute("color", "#6fa8ff");
+        g.append(plate, hole);
+        return g;
+    }
+
+    // x0137-tool: anything the user clicks in Trainer mode (goggles, moles, towel, nozzles)
+    AFRAME.registerComponent("x0137-tool", {
+        schema: { name: { type: "string" } },
+        init: function () {
+            const el = this.el;
+            this.base = el.object3D.scale.clone();
+            el.addEventListener("mouseenter", () => el.object3D.scale.copy(this.base).multiplyScalar(1.15));
+            el.addEventListener("mouseleave", () => el.object3D.scale.copy(this.base));
+            el.addEventListener("click", () => {
+                if (!el.object3D.visible) return;
+                el.sceneEl.systems["x0137-trainer"].use(this.data.name, el);
+            });
+        }
+    });
+
+    window.X0137_TRAINER_CONFIG = CONFIG;
+})();
