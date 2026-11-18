@@ -185,4 +185,118 @@
         markDone: function (step) { this.done[step] = true; this.renderChecklist(); },
         unmarkDone: function (step) { delete this.done[step]; this.renderChecklist(); },
 
-        
+        // TREATMENT
+        tick: function (time, dt) {
+            if (this.state !== "treat" || !this.skin) return;
+            const sec = Math.min(dt, 100) / 1000;
+            if (this.el.is("vr-mode")) {
+                // VR: the device hangs over the point where the laser hits the arm;
+                // the thumbstick (or A / B) sets the height, the trigger exposes
+                this.aimFromLaser();
+                if (Math.abs(this.stickY) > 0.15) this.setHeight(this.heightCm - this.stickY * 3 * sec, true);
+            } else if (!this.parked || this.pointerDown) {
+                this.followPointer();
+            }
+            const h = this.heightCm / 100;
+            const cm = this.heightCm;
+            const status = cm < CONFIG.distanceCm.target - CONFIG.distanceCm.tol ? "close" :
+                           cm > CONFIG.distanceCm.target + CONFIG.distanceCm.tol ? "far" : "good";
+            this.updateRulerMarker();
+            this.updateMeter(cm, status);
+            if (!this.aim) return;
+
+            const top = this.skin.topAt(this.aim.x, this.aim.z) || 0;
+            this.placeDevice(this.aim.x, top, this.aim.z, h);
+
+            if (this.exposing) this.exposeStep(sec, status, time);
+        },
+
+        // the first hand whose laser touches the skin aims the device
+        aimFromLaser: function () {
+            for (const hand of [this.rightHand, this.leftHand]) {
+                const rc = hand && hand.components.raycaster;
+                if (!rc || !rc.intersections) continue;
+                const hit = rc.intersections.find((x) => x.object === this.skin.mesh);
+                if (!hit) continue;
+                const p = this.arm.object3D.worldToLocal(hit.point.clone());
+                this.aim = { x: p.x, z: p.z };
+                return;
+            }
+        },
+
+        followPointer: function () {
+            const rc = this.el.components.raycaster;
+            if (!rc || !rc.intersections) return;
+            // only when the bare skin is the first thing under the pointer (not a mole, tool or panel)
+            const hit = rc.intersections[0];
+            if (!hit || hit.object !== this.skin.mesh) return;
+            const p = this.arm.object3D.worldToLocal(hit.point.clone());
+            this.aim = { x: p.x, z: p.z };
+        },
+
+        placeDevice: function (x, top, z, h) {
+            const w = this.arm.object3D.localToWorld(new THREE.Vector3(x, top + h, z));
+            this.device.object3D.position.copy(w);
+            if (this.beam) {
+                this.beam.object3D.position.y = -h / 2;
+                this.beam.object3D.scale.y = Math.max(h, 0.001);
+            }
+            this.footprint.object3D.position.set(x, top + 0.0008, z);
+        },
+
+        startExpose: function (source) {
+            if (this.state !== "treat" || this.exposing) return;
+            if (!this.done.goggles) { this.warn(i18n.t("trainer.warn.goggles")); return; }
+            if (!this.nozzle) { this.warn(i18n.t("trainer.warn.nozzle")); return; }
+            if (!this.aim) { this.warn(i18n.t("trainer.warn.aim")); return; }
+            this.exposing = true;
+            this.exposeSource = source;
+            this.setGlow(true);
+            ui.subtitle(i18n.t("trainer.exposing"));
+        },
+
+        stopExpose: function () {
+            if (!this.exposing) return;
+            this.exposing = false;
+            this.setGlow(false);
+            // a real exposure (not a mis-click) ends the spot
+            if (this.stats.t >= 1) this.setState("result");
+        },
+
+        exposeStep: function (sec, status, time) {
+            const s = this.stats, b = CONFIG.burn;
+            s.t += sec;
+            s.samples++;
+            s[status]++;
+            const cells = this.skin.footprint(this.aim.x, this.aim.z, this.nozzle);
+            let covered = 0;
+            const tooLong = s.t > CONFIG.timeS.target + CONFIG.timeS.tol;
+            cells.forEach((c) => {
+                if (c.lesion) covered++;
+                if (c.towel && this.towelOn) return; // towel protects healthy skin
+                let r = 0;
+                if (status === "close") r += b.tooClose;
+                if (tooLong) r += b.tooLong;
+                if (!c.lesion) r += b.healthy;
+                this.skin.addRed(c, r * sec);
+            });
+            s.cover += covered / this.spotCells.length;
+            this.updateScreen();
+
+            if (status === "close" && time - this.lastBeep > 1200) {
+                this.lastBeep = time;
+                this.beep();
+                ui.subtitle(i18n.t("trainer.warn.close"));
+            }
+            if (tooLong && !s.longWarned) {
+                s.longWarned = true;
+                this.beep();
+                ui.subtitle(i18n.t("trainer.warn.long"));
+            }
+        },
+
+        // exact = no rounding to the step (thumbstick, click on the ruler)
+        setHeight: function (cm, exact) {
+            const v = exact ? cm : Math.round(cm / CONFIG.heightStepCm) * CONFIG.heightStepCm;
+            this.heightCm = Math.max(0.5, Math.min(12, v));
+        },
