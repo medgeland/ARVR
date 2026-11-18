@@ -106,3 +106,26 @@
                 if (this.vr) this.vr.hide();
             });
         },
+
+        
+        // states
+        setState: function (state) {
+            this.state = state;
+            this.buildControls();
+            this.renderChecklist();
+            if (state === "intro") {
+                this.say(i18n.t("trainer.intro"));
+            } else if (state === "treat") {
+                this.meter.hidden = false;
+                this.stats = { t: 0, good: 0, close: 0, far: 0, cover: 0, samples: 0 };
+                this.updateScreen();
+                this.say(i18n.t("trainer.treat.hint"));
+            } else if (state === "result") {
+                this.meter.hidden = true;
+                // device goes back on the table so the treated skin is visible
+                this.device.object3D.position.copy(this.restPosition);
+                if (this.beam) this.beam.object3D.visible = false;
+                this.footprint.object3D.visible = false;
+                this.showResult();
+            }
+        },
