@@ -44,4 +44,113 @@
     .x0137-goggles span { position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
         padding: 3px 10px; background: #ff8c28; font: bold 13px Arial, Helvetica, sans-serif; }`;
 
+    function el(tag, cls, text) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text != null) e.textContent = text;
+        return e;
+    }
 
+    const ui = {
+        // ui.init({ pacing: true, questions: [{ key, intent }], homeHref })
+        init: function (opts) {
+            opts = opts || {};
+            const style = el("style");
+            style.textContent = CSS;
+            document.head.appendChild(style);
+            const hud = el("div", "x0137-hud");
+            const top = el("div", "x0137-top");
+            const home = el("a", "x0137-btn home", "← " + i18n.t("hud.home"));
+            home.href = (opts.homeHref || "index.html") + "?lang=" + i18n.lang;
+            home.setAttribute("role", "button");
+            top.appendChild(home);
+            this.topRight = el("div", "x0137-row");
+            top.appendChild(this.topRight);
+            hud.appendChild(top);
+
+            const bottom = el("div", "x0137-bottom");
+            this.statusEl = el("div", "x0137-status");
+            this.heardEl = el("div", "x0137-heard");
+            this.subEl = el("div", "x0137-sub");
+            this.subEl.setAttribute("aria-live", "polite");
+            this.qRow = el("div", "x0137-row");
+            this.row = el("div", "x0137-row");
+            bottom.append(this.statusEl, this.heardEl, this.subEl, this.qRow, this.row);
+            hud.appendChild(bottom);
+            document.body.appendChild(hud);
+
+            if (opts.pacing !== false) {
+                this.addButton(this.row, "hud.wait", "wait");
+                this.addButton(this.row, "hud.again", "again");
+                this.addButton(this.row, "hud.next", "next");
+            }
+            this.setQuestions(opts.questions || []);
+            this._buildMic();
+            this._listen();
+            this._aimOnPress();
+        },
+
+        // button that fires an intent (same path as voice)
+        addButton: function (parent, key, intent, cls) {
+            const b = el("button", "x0137-btn" + (cls ? " " + cls : ""), i18n.t(key));
+            b.type = "button";
+            b.dataset.intent = intent;
+            b.addEventListener("click", function () { speech.fire(intent, "button"); });
+            parent.appendChild(b);
+            return b;
+        },
+
+        // question buttons change with the state; pass [] to clear them
+        setQuestions: function (list) {
+            this.qRow.innerHTML = "";
+            list.forEach((q) => this.addButton(this.qRow, q.key, q.intent, "q"));
+        },
+
+        subtitle: function (text) {
+            this.subEl.textContent = text || "";
+            const vr = document.getElementById("x0137-vr-subtitle");
+            if (vr) vr.setAttribute("x0137-label", "value", text || "");
+        },
+
+        // after a failed recognition the buttons pulse, so the child sees what to do instead
+        lightButtons: function () {
+            this.qRow.querySelectorAll(".x0137-btn").forEach(lit);
+            this.row.querySelectorAll(".x0137-btn").forEach(lit);
+            function lit(b) {
+                b.classList.remove("lit");
+                void b.offsetWidth; // restart the animation
+                b.classList.add("lit");
+            }
+        },
+
+        _buildMic: function () {
+            const mic = el("button", "x0137-btn x0137-mic", i18n.t("hud.mic"));
+            mic.type = "button";
+            mic.hidden = !speech.supported;
+            this.mic = mic;
+            // hold to talk: pointer events cover mouse, touch and pen
+            const down = (e) => {
+                e.preventDefault();
+                if (speech.disabled) return;
+                mic.classList.add("on");
+                speech.start();   // the browser asks for mic permission here, on the first press
+            };
+            const up = () => {
+                if (!mic.classList.contains("on")) return;
+                mic.classList.remove("on");
+                speech.stop();
+            };
+            mic.addEventListener("pointerdown", down);
+            mic.addEventListener("pointerup", up);
+            mic.addEventListener("pointerleave", up);
+            mic.addEventListener("pointercancel", up);
+            mic.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+            // keyboard: hold Space or Enter on the focused button
+            mic.addEventListener("keydown", function (e) {
+                if ((e.key === " " || e.key === "Enter") && !e.repeat) down(e);
+            });
+            mic.addEventListener("keyup", function (e) {
+                if (e.key === " " || e.key === "Enter") up();
+            });
+            this.row.appendChild(mic);
+        },
