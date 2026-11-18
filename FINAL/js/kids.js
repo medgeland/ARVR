@@ -105,3 +105,27 @@
             }
             this.refreshVr();
         },
+
+        // one object explored; after all 3 the guide offers the demo
+        explore: function (name) {
+            if (name === "door" && this.state === "waiting") {
+                this.setState("treatment");
+                return;
+            }
+            if (this.state === "helper") {
+                if (name === "kgoggles") this.helperGoggles();
+                else if (name === "tube") this.takeCream();
+                else if (name.indexOf("mole:") === 0) this.coverMole(+name.slice(5));
+                else if (name === "towel") this.layTowel();
+                else if (name.indexOf("window:") === 0) this.pickWindow(name.slice(7));
+                return;
+            }
+            if (this.state !== "treatment" || OBJECTS.indexOf(name) === -1) return;
+            this.explored[name] = true;
+            const lines = ["kids.obj." + name];
+            if (OBJECTS.every((o) => this.explored[o])) {
+                this.step = "ask";
+                lines.push("kids.ask.demo");
+            }
+            this.sayAll(lines);
+        },
