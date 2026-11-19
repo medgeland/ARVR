@@ -175,4 +175,23 @@
             this.el.parentNode.appendChild(el);
             return el;
         },
-        
+        // towel: every cell outside the hole is protected
+        setTowel: function (hole) {
+            this.cells.forEach((c) => {
+                c.towel = Math.abs(c.x - hole.x) > hole.half || Math.abs(c.z - hole.z) > hole.half;
+            });
+        },
+
+        // cells under a nozzle footprint centred at (x, z)
+        footprint: function (x, z, nozzle) {
+            const h = nozzle.mm / 2000;
+            return this.cells.filter(function (c) {
+                const dx = c.x - x, dz = c.z - z;
+                return nozzle.shape === "round" ? dx * dx + dz * dz <= h * h : Math.abs(dx) <= h && Math.abs(dz) <= h;
+            });
+        },
+        addRed: function (c, amount) {
+            if (amount <= 0 || c.red >= 1) return;
+            c.red = Math.min(1, c.red + amount);
+            this.dirty = true;
+        },
