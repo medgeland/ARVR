@@ -122,4 +122,36 @@
             return { x: lerp(this.data.x0, this.data.x1, along), z: across || 0 };
         },
 
-        
+        // LESIONS (psoriasis, vitiligo, etc.) and moles
+        // type "psoriasis": pink plaque, raised silvery scale blocks; "vitiligo": white patch, flat
+        addLesion: function (opts) {
+            const R = opts.diameterMm / 2000;
+            const cx = opts.x, cz = opts.z;
+            const list = [];
+            this.cells.forEach((c) => {
+                const dx = c.x - cx, dz = c.z - cz;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                const ragged = R * (0.86 + 0.24 * hash(c.i, c.j, 7));   // uneven edge
+                if (dist > ragged) return;
+                const n = (hash(c.i, c.j, 3) - 0.5) * 0.08;
+                c.lesion = opts.id;
+                c.healed = c.base.clone();                              // what it fades back to
+                // when this cell repigments (0..1): edges first and scattered dots, the centre last
+                c.healAt = 0.75 * (dist / ragged > 0.8 ? 0.1 : 1 - dist / ragged) + 0.25 * hash(c.i, c.j, 19);
+                if (hash(c.i, c.j, 23) > 0.9) c.healAt *= 0.4;
+                if (opts.type === "psoriasis") {
+                    const edge = dist > R * 0.7;
+                    c.base = new THREE.Color(edge ? "#d97a70" : "#e89a8e").offsetHSL(0, 0, n);
+                    if (!edge && hash(c.i, c.j, 11) > 0.5) {
+                        c.raise = 1;
+                        c.base = new THREE.Color("#efe6e2").offsetHSL(0, 0, n * 0.5);  // silvery scale
+                    }
+                } else {
+                    c.base = new THREE.Color("#f7eee7").offsetHSL(0, 0, n * 0.5);
+                }
+                list.push(c);
+            });
+            this.updateMatrices();
+            this.dirty = true;
+            return list;
+        },
