@@ -147,3 +147,65 @@
                 confidence: confidence == null ? 1 : confidence
             });
         },
+
+        // Speech synthesis
+        // say(text) speaks one line; resolves when it ends (or at once if speech is unavailable)
+        say: function (text, opts) {
+            this._emit("x0137-say", { text: text });
+            if (!("speechSynthesis" in window) || !text) return Promise.resolve();
+            const synth = window.speechSynthesis;
+            synth.cancel();
+            const parts = (opts && opts.split) ? splitLine(text) : [text];
+            const lang = i18n.speechLang();
+            const voice = pickVoice(lang);
+            const rate = this.rate;
+            return new Promise(function (resolve) {
+                let left = parts.length;
+                parts.forEach(function (p) {
+                    const u = new SpeechSynthesisUtterance(p);
+                    u.lang = lang;
+                    u.rate = rate;
+                    if (voice) u.voice = voice;
+                    u.onend = u.onerror = function () { if (--left === 0) resolve(); };
+                    synth.speak(u);
+                });
+            });
+        },
+
+        cancelSpeech: function () {
+            if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+        },
+
+        // adaptive pacing: the mode calls this after repeated wait/again
+        slowDown: function () {
+            this.rate = 0.85;
+        },
+
+        _emit: function (type, detail) {
+            window.dispatchEvent(new CustomEvent(type, { detail: detail }));
+        },
+        _status: function (state, message) {
+            this._emit("x0137-speech-status", { state: state, message: message });
+        },
+
+        match: matchText
+    };
+
+    // splits a long line at sentence ends, used when the child asks to slow down
+    function splitLine(text) {
+        // no regex lookbehind: older Safari versions fail to parse it
+        return (text.match(/[^.!?]+[.!?]*/g) || [text]).map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+
+    function pickVoice(lang) {
+        if (!("speechSynthesis" in window)) return null;
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = lang.slice(0, 2);
+        return voices.find(function (v) { return v.lang === lang; }) ||
+               voices.find(function (v) { return v.lang && v.lang.indexOf(prefix) === 0; }) || null;
+    }
+    // Chrome loads voices late; asking once warms the list
+    if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
+
+    window.X0137_SPEECH = speech;
+})();
