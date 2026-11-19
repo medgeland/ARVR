@@ -23,3 +23,22 @@
         { name: "next",      phrases: ["go on", "next", "okay", "ok", "yes", "дальше", "давай*", "да", "хорошо", "ладно",
                                        "окей", "ок", "ага", "угу", "готов*", "поехали", "продолж*"] }
     ];
+
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    function normalise(text) {
+        return (text || "").toLowerCase().replace(/[.,!?;:«»"']/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    // returns {name, phrase} or null. Short phrases must match a whole word, longer ones a substring.
+    function matchText(text, allowed) {
+        const t = " " + normalise(text) + " ";
+        for (const intent of INTENTS) {
+            if (allowed && allowed.indexOf(intent.name) === -1) continue;
+            for (const p of intent.phrases) {
+                const hit = p.length <= 3 ? t.indexOf(" " + p + " ") !== -1 : t.indexOf(p) !== -1;
+                if (hit) return { name: intent.name, phrase: p };
+            }
+        }
+        return null;
+    }
