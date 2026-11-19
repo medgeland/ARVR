@@ -105,3 +105,21 @@
         tick: function () {
             if (this.dirty) this.updateColors();
         },
+
+        // LOOKUPS (arm-local metres)
+        cellAt: function (x, z) {
+            const i = Math.floor((x - this.data.x0) / this.v);
+            const j = Math.floor(z / this.v);
+            const k = this.index[i + ":" + j];
+            return k === undefined ? null : this.cells[k];
+        },
+        topAt: function (x, z) {
+            const c = this.cellAt(x, z);
+            return c ? this.data.bottom + (c.steps + c.raise) * this.v : null;
+        },
+        // centre of the skin along the arm, as a fraction 0..1 (elbow..wrist) and across in metres
+        pointAt: function (along, across) {
+            return { x: lerp(this.data.x0, this.data.x1, along), z: across || 0 };
+        },
+
+        
