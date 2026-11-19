@@ -210,3 +210,85 @@
             this.dirty = true;
         }
     });
+
+    // MODELS
+    // A model is a side profile drawn in characters (rows = top to bottom, columns = back to front),
+    // extruded over `width` slices. Lower-case characters appear in every slice; upper-case ones only
+    // in the inner slices (the edge slices use `edge` instead), so a screen or a window sits inside a rim.
+    // The model's origin is the centre of the bottom of its "N" cells: the light window.
+    const MODELS = {
+        // handheld excimer, generic (no logo): flat head with a top screen, light window underneath,
+        // handle rising up and back toward the user's hand
+        excimer: {
+            voxelMm: 7,
+            width: 9,
+            edge: "w",
+            palette: { g: "#5f6670", w: "#f2f3f5", S: "#1b3a8f", K: "#9aa3ad", N: "#8ab4ff", d: "#cfd4da" },
+            rows: [
+                "gg...............",
+                "ggg..............",
+                ".ggg.............",
+                "..gggK...........",
+                "...gwwSSSSSSSww..",
+                "....wwwwwwwwwwww.",
+                "....dwwwwwwwwwww.",
+                ".....wwwwwNNNNNw."
+            ]
+        }
+    };
+    window.X0137_VOXEL_MODELS = MODELS;
+
+    AFRAME.registerComponent("x0137-voxel-model", {
+        schema: { model: { type: "string" } },
+        init: function () {
+            const model = MODELS[this.data.model];
+            if (!model) { console.warn("x0137-voxel-model: no model " + this.data.model); return; }
+            const v = model.voxelMm / 1000;
+            const blocks = [];
+            const marks = {}; // centres of special cells, e.g. marks.S = screen, marks.N = window
+            for (let s = 0; s < model.width; s++) {
+                const edge = s === 0 || s === model.width - 1;
+                model.rows.forEach(function (row, r) {
+                    for (let c = 0; c < row.length; c++) {
+                        let ch = row[c];
+                        if (ch === ".") continue;
+                        if (ch !== ch.toLowerCase() && edge) ch = model.edge;
+                        const p = { x: (s - (model.width - 1) / 2) * v, y: -r * v, z: -c * v, ch: ch };
+                        blocks.push(p);
+                        if (ch !== ch.toLowerCase()) (marks[ch] = marks[ch] || []).push(p);
+                    }
+                });
+            }
+            // origin = bottom centre of the light window
+            const win = marks.N || blocks;
+            const o = centre(win);
+            o.y = Math.min.apply(null, win.map(function (p) { return p.y; })) - v / 2;
+
+            const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(v, v, v),
+                new THREE.MeshLambertMaterial({ color: "#ffffff" }), blocks.length);
+            blocks.forEach(function (p, k) {
+                M.makeTranslation(p.x - o.x, p.y - o.y, p.z - o.z);
+                mesh.setMatrixAt(k, M);
+                mesh.setColorAt(k, C.set(model.palette[p.ch] || "#ff00ff"));
+            });
+            mesh.instanceMatrix.needsUpdate = true;
+            mesh.instanceColor.needsUpdate = true;
+            this.el.setObject3D("mesh", mesh);
+
+            // special points relative to the origin, for things like the screen text
+            this.points = {};
+            Object.keys(marks).forEach((k) => {
+                const m = centre(marks[k]);
+                const top = Math.max.apply(null, marks[k].map(function (p) { return p.y; })) + v / 2;
+                this.points[k] = { x: m.x - o.x, y: top - o.y, z: m.z - o.z };
+            });
+            this.voxel = v;
+        }
+    });
+
+    function centre(list) {
+        const s = { x: 0, y: 0, z: 0 };
+        list.forEach(function (p) { s.x += p.x; s.y += p.y; s.z += p.z; });
+        return { x: s.x / list.length, y: s.y / list.length, z: s.z / list.length };
+    }
+})();
