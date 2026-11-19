@@ -195,3 +195,18 @@
             c.red = Math.min(1, c.red + amount);
             this.dirty = true;
         },
+
+        // Kid mode time-lapse: progress 0 = lesion as it is, 1 = (almost) fully repigmented.
+        // Each cell turns over a short window after its own healAt, so the patch shrinks unevenly.
+        setHeal: function (lesionId, progress) {
+            this.cells.forEach((c) => {
+                if (c.lesion === lesionId) c.heal = Math.max(0, Math.min(1, (progress - c.healAt) / 0.18));
+            });
+            this.dirty = true;
+        },
+
+        reset: function () {
+            this.cells.forEach((c) => { c.red = 0; c.heal = 0; c.towel = false; });
+            this.dirty = true;
+        }
+    });
