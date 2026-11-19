@@ -42,3 +42,108 @@
         }
         return null;
     }
+
+    const speech = {
+        supported: !!Recognition,
+        listening: false,
+        disabled: !Recognition, // true after "not-allowed" etc.: buttons only from then on
+        rate: 1.0,
+        allowed: null, // the mode sets which intents it understands
+        log: [], // intents this session, memory only, never stored
+
+        // the mode calls this once: speech.init({ intents: ["wait", "again", ...] })
+        init: function (opts) {
+            this.allowed = (opts && opts.intents) || null;
+            if (!this.supported) this._status("unsupported", i18n.t("speech.unsupported"));
+        },
+
+        // --- recognition: called on mic button press / release ---
+        start: function () {
+            if (this.disabled || this.listening) return;
+            this.cancelSpeech();
+            const rec = new Recognition();
+            rec.lang = i18n.speechLang();
+            rec.interimResults = true;
+            rec.maxAlternatives = 3;
+            rec.continuous = false;
+            this._rec = rec;
+            this._finals = [];
+            this._interim = "";
+            this._errored = false;
+
+            rec.onresult = (e) => {
+                this._interim = "";
+                this._finals = [];
+                for (let i = 0; i < e.results.length; i++) {
+                    const r = e.results[i];
+                    if (r.isFinal) {
+                        for (let a = 0; a < r.length; a++) this._finals.push({ text: r[a].transcript, conf: r[a].confidence });
+                    } else {
+                        this._interim += r[0].transcript;
+                    }
+                }
+                this._emit("x0137-heard", { text: this._interim || (this._finals[0] && this._finals[0].text) || "", final: false });
+            };
+            rec.onerror = (e) => {
+                this._errored = true;
+                if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+                    this.disabled = true;
+                    this._status("denied", i18n.t("speech.denied"));
+                } else if (e.error === "network") {
+                    this.disabled = true;
+                    this._status("network", i18n.t("speech.network"));
+                } else if (e.error === "no-speech") {
+                    this._status("nospeech", i18n.t("speech.nospeech"));
+                }
+                // "aborted" happens on a very short press: ignore
+            };
+            rec.onend = () => {
+                this.listening = false;
+                this._status("idle", "");
+                if (!this._errored) this._finish();
+            };
+
+            try {
+                rec.start();
+                this.listening = true;
+                this._status("listening", i18n.t("hud.mic.listening"));
+            } catch (err) {
+                this.listening = false;
+            }
+        },
+
+        stop: function () {
+            if (this._rec && this.listening) {
+                try { this._rec.stop(); } catch (e) { /* already stopped */ }
+            }
+        },
+
+        // turns the final alternatives (or the last interim text) into one intent event
+        _finish: function () {
+            const alts = this._finals.length ? this._finals : (this._interim ? [{ text: this._interim, conf: 0.3 }] : []);
+            if (!alts.length) {
+                this._status("nospeech", i18n.t("speech.nospeech"));
+                return;
+            }
+            this._emit("x0137-heard", { text: alts[0].text, final: true });
+            for (const alt of alts) {
+                const m = matchText(alt.text, this.allowed);
+                if (m) {
+                    this.fire(m.name, "voice", alt.text, alt.conf || 0);
+                    return;
+                }
+            }
+            this._emit("x0137-nomatch", { text: alts[0].text });
+            this._status("nomatch", i18n.t("speech.nomatch"));
+        },
+
+        // buttons call this too, so voice and buttons share one path
+        fire: function (name, source, transcript, confidence) {
+            this.log.push({ name: name, source: source || "button", t: Date.now() });
+            this._emit("x0137-intent", {
+                name: name,
+                source: source || "button",
+                transcript: transcript || "",
+                confidence: confidence == null ? 1 : confidence
+            });
+        },
