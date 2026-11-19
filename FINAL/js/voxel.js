@@ -155,3 +155,24 @@
             this.dirty = true;
             return list;
         },
+
+        // a mole: dark cells + a small clickable block for the sunscreen step
+        addMole: function (x, z, onCreate) {
+            const c = this.cellAt(x, z);
+            if (!c) return null;
+            c.base = new THREE.Color("#5a3a28");
+            c.mole = true;
+            this.dirty = true;
+            const el = document.createElement("a-box");
+            const s = this.v * 2.4;
+            el.setAttribute("width", s);
+            el.setAttribute("depth", s);
+            el.setAttribute("height", this.v * 0.8);
+            el.setAttribute("color", "#4a2e20");
+            el.setAttribute("position", c.x + " " + (this.topAt(c.x, c.z) + this.v * 0.4) + " " + c.z);
+            el.classList.add("clickable");
+            if (onCreate) onCreate(el);
+            this.el.parentNode.appendChild(el);
+            return el;
+        },
+        
