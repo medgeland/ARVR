@@ -502,25 +502,10 @@
             if (key) this.say(i18n.t(key));
         },
 
+        // the cloth: skin cells outside a square hole over the spot turn into cotton when it is laid
         buildTowel: function () {
-            const c = this.spotCentre, d = this.kidSkin.data;
-            const half = HELPER.towelHoleMm / 2000;
-            this.kidSkin.setTowel({ x: c.x, z: c.z, half: half });
-            const y = d.top0 + 0.006, zMax = d.halfW0 + 0.012;
-            const t = document.createElement("a-entity");
-            t.object3D.visible = false;
-            [[d.x0, c.x - half, -zMax, zMax], [c.x + half, d.x1, -zMax, zMax],
-             [c.x - half, c.x + half, -zMax, c.z - half], [c.x - half, c.x + half, c.z + half, zMax]].forEach(function (p) {
-                const b = document.createElement("a-box");
-                b.setAttribute("width", p[1] - p[0]);
-                b.setAttribute("depth", p[3] - p[2]);
-                b.setAttribute("height", 0.004);
-                b.setAttribute("position", ((p[0] + p[1]) / 2) + " " + y + " " + ((p[2] + p[3]) / 2));
-                b.setAttribute("color", "#f5f5f0");
-                t.appendChild(b);
-            });
-            this.kidArm.appendChild(t);
-            this.towel = t;
+            const c = this.spotCentre;
+            this.kidSkin.setTowel({ x: c.x, z: c.z, half: HELPER.towelHoleMm / 2000 });
         },
 
         // bobbing orange arrow above the thing to click next
