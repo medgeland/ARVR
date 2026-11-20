@@ -120,6 +120,10 @@
             } else if (state === "treat") {
                 this.meter.hidden = false;
                 this.stats = { t: 0, good: 0, close: 0, far: 0, cover: 0, samples: 0, closeS: 0, longS: 0 };
+                // the device moves onto the arm right away, 5 cm from the spot toward the elbow, so it is
+                // visible and the user only has to move the mouse onto the spot (aiming is still their job)
+                this.aim = { x: this.spotCentre.x - 0.05, z: this.spotCentre.z };
+                this.parked = false;
                 this.updateScreen();
                 this.say(i18n.t("trainer.treat.hint"));
             } else if (state === "result") {
