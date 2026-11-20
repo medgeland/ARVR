@@ -35,8 +35,8 @@
                  x0137-texture="src: textures/wall.jpg; repeat: 3 1; color: #eef3ee; tint: #f4fbf6"></a-plane>
         <a-plane width="8" height="8" position="0 3 0" rotation="90 0 0" color="#ffffff"></a-plane>
         <!-- camera rig: seated, the camera only moves when the user moves it -->
-        <a-entity id="rig" position="0 0 1.5" wasd-controls="acceleration: 20">
-            <a-entity id="cam" camera look-controls position="0 1.2 0">
+        <a-entity id="rig" position="0 0 1.5">
+            <a-entity id="cam" camera look-controls wasd-controls="acceleration: 20; fly: false" position="0 1.2 0">
                 <!-- VR subtitle -->
                 <a-entity id="x0137-vr-subtitle" position="0 -0.32 -0.95" visible="false"
                            x0137-label="width: 1.4; color: #ffffff; background: rgba(40,53,147,0.9); fontSize: 48"></a-entity>
