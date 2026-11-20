@@ -417,12 +417,13 @@
             (this.moles || []).forEach((m) => {
                 delete m.dataset.covered;
                 m.setAttribute("color", "#4a2e20");
-                m.components["x0137-explorable"] && m.components["x0137-explorable"].base.set(1, 1, 1);
+                const ex = m.components["x0137-explorable"];
+                if (ex && ex.base) ex.base.set(1, 1, 1);
                 m.object3D.scale.set(1, 1, 1);
             });
             const cloth = document.getElementById("kid-cloth");
             if (cloth) cloth.object3D.visible = true;
-            if (this.towel) this.towel.object3D.visible = false;
+            if (this.kidSkin) this.kidSkin.showTowel(false);
             this.updateGuide();
         },
 
