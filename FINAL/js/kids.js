@@ -469,7 +469,8 @@
             if (!this.creamReady) { this.say(i18n.t("kids.help.cream.first")); return; }
             m.dataset.covered = "1";
             m.setAttribute("color", "#ffffff");                 // a white blob of cream
-            m.components["x0137-explorable"].base.set(2, 2.4, 2);
+            const ex = m.components["x0137-explorable"];
+            if (ex && ex.base) ex.base.set(2, 2.4, 2);
             m.object3D.scale.set(2, 2.4, 2);
             const n = this.moles.filter((x) => x.dataset.covered).length;
             if (n < this.moles.length) {
@@ -485,7 +486,7 @@
         layTowel: function () {
             if (this.helperStep !== "towel") { this.stepHint(); return; }
             document.getElementById("kid-cloth").object3D.visible = false;
-            this.towel.object3D.visible = true;
+            this.kidSkin.showTowel(true);
             this.helperStep = "window";
             this.sayAll(["kids.help.towelDone"]);
             this.updateGuide();
