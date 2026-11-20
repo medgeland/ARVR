@@ -10,6 +10,7 @@
     const M = new THREE.Matrix4();
     const C = new THREE.Color();
     const RED = new THREE.Color("#d23a2c");
+    const CLOTH = new THREE.Color("#f4f2ea");   // cotton towel
 
     // deterministic per-cell noise in 0..1, so the skin looks the same on every load
     function hash(i, j, seed) {
@@ -90,6 +91,8 @@
         },
 
         colorOf: function (c, out) {
+            // the towel lies right on the skin: its cells are drawn as cloth, so the hole shows the spot exactly
+            if (this.towelShown && c.towel) return out.copy(CLOTH).offsetHSL(0, 0, (hash(c.i, c.j, 31) - 0.5) * 0.05);
             out.copy(c.base);
             if (c.lesion && c.heal > 0) out.lerp(c.healed, Math.min(1, c.heal));
             if (c.red > 0) out.lerp(RED, Math.min(1, c.red) * 0.85);
