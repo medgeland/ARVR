@@ -273,6 +273,8 @@
             const cells = this.skin.footprint(this.aim.x, this.aim.z, this.nozzle);
             let covered = 0;
             const tooLong = s.t > CONFIG.timeS.target + CONFIG.timeS.tol;
+            if (status === "close") s.closeS += sec; // seconds too close / too long, to explain redness
+            if (tooLong) s.longS += sec;
             cells.forEach((c) => {
                 if (c.lesion) covered++;
                 if (c.towel && this.towelOn) return; // towel protects healthy skin
@@ -304,6 +306,13 @@
         },
 
         // RESULT
+        // why the skin turned red: name the biggest cause, with the seconds, instead of a generic line
+        burnTip: function (s) {
+            const sec = (x) => Math.round(x * 10) / 10;
+            if (s.closeS >= 0.3) return fmt("trainer.tip.burn.close", { s: sec(s.closeS), cm: CONFIG.distanceCm.target });
+            if (s.longS > 0) return fmt("trainer.tip.burn.long", { s: sec(s.longS), max: CONFIG.timeS.target + CONFIG.timeS.tol });
+            return i18n.t("trainer.tip.burn.edge");
+        },
         showResult: function () {
             const s = this.stats, spot = CONFIG.spots[0];
             const best = this.bestNozzle(spot);
@@ -329,7 +338,7 @@
                       : fmt("trainer.tip.far", { p: pct(1 - share - closeShare) }) },
                 { key: "time", ok: timeOk,
                   tip: fmt(s.t < CONFIG.timeS.target ? "trainer.tip.short" : "trainer.tip.long", { t: t, target: CONFIG.timeS.target }) },
-                { key: "skin", ok: maxRed < CONFIG.pass.maxRed, tip: i18n.t("trainer.tip.burn") }
+                { key: "skin", ok: maxRed < CONFIG.pass.maxRed, tip: this.burnTip(s) }
             ];
             if (timeOk) this.markDone("time");
             if (share >= CONFIG.pass.distanceShare) this.markDone("distance");
@@ -631,33 +640,10 @@
             }
         },
 
-        // towel on the arm: a white sheet with a square hole over the spot (hidden until used)
+        // towel on the arm: the skin cells outside a square hole over the spot turn into cloth when it is used
         buildTowel: function () {
-            const c = this.spotCentre, d = this.skin.data;
-            const half = CONFIG.towelHoleMm / 2000;
-            this.skin.setTowel({ x: c.x, z: c.z, half: half });
-            const y = d.top0 + 0.006;
-            const t = document.createElement("a-entity");
-            t.object3D.visible = false;
-            const zMax = d.halfW0 + 0.012;
-            const pieces = [
-                // elbow side, wrist side, two strips beside the hole
-                [d.x0, c.x - half, -zMax, zMax],
-                [c.x + half, d.x1, -zMax, zMax],
-                [c.x - half, c.x + half, -zMax, c.z - half],
-                [c.x - half, c.x + half, c.z + half, zMax]
-            ];
-            pieces.forEach(function (p) {
-                const b = document.createElement("a-box");
-                b.setAttribute("width", p[1] - p[0]);
-                b.setAttribute("depth", p[3] - p[2]);
-                b.setAttribute("height", 0.004);
-                b.setAttribute("position", ((p[0] + p[1]) / 2) + " " + y + " " + ((p[2] + p[3]) / 2));
-                b.setAttribute("color", "#f5f5f0");
-                t.appendChild(b);
-            });
-            this.arm.appendChild(t);
-            this.towel = t;
+            const c = this.spotCentre;
+            this.skin.setTowel({ x: c.x, z: c.z, half: CONFIG.towelHoleMm / 2000 });
         },
 
         // nozzle tray from CONFIG
