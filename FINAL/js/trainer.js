@@ -30,7 +30,9 @@
         moles: [ { along: 0.18, across: 0.022 }, { along: 0.78, across: -0.018 } ],
         towelHoleMm: 36,
         // how fast the skin reddens, per second of exposure
-        burn: { tooClose: 0.5, tooLong: 0.25, healthy: 0.05 },
+        // healthy: the skin around the spot inside the towel hole. Low enough that a correct 10-12 s session
+        // stays under pass.maxRed; too close or too long still burns quickly.
+        burn: { tooClose: 0.5, tooLong: 0.25, healthy: 0.02 },
         pass: { distanceShare: 0.8, coverage: 0.85, maxRed: 0.35 },
         steps: ["goggles", "sunscreen", "vitamin", "towel", "nozzle", "distance", "time"]
     };
@@ -117,7 +119,7 @@
                 this.say(i18n.t("trainer.intro"));
             } else if (state === "treat") {
                 this.meter.hidden = false;
-                this.stats = { t: 0, good: 0, close: 0, far: 0, cover: 0, samples: 0 };
+                this.stats = { t: 0, good: 0, close: 0, far: 0, cover: 0, samples: 0, closeS: 0, longS: 0 };
                 this.updateScreen();
                 this.say(i18n.t("trainer.treat.hint"));
             } else if (state === "result") {
@@ -159,7 +161,7 @@
             } else if (name === "towel") {
                 el.object3D.visible = false;
                 this.towelOn = true;
-                this.towel.object3D.visible = true;
+                this.skin.showTowel(true);
                 this.markDone("towel");
             } else if (name.indexOf("nozzle:") === 0) {
                 this.pickNozzle(name.slice(7));
