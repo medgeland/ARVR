@@ -179,6 +179,10 @@
             return el;
         },
         // towel: every cell outside the hole is protected
+        showTowel: function (on) {
+            this.towelShown = !!on;
+            this.dirty = true;
+        },
         setTowel: function (hole) {
             this.cells.forEach((c) => {
                 c.towel = Math.abs(c.x - hole.x) > hole.half || Math.abs(c.z - hole.z) > hole.half;
@@ -209,7 +213,9 @@
         },
 
         reset: function () {
-            this.cells.forEach((c) => { c.red = 0; c.heal = 0; c.towel = false; });
+            // the towel hole stays (it is fixed per scene); only the towel itself comes off
+            this.cells.forEach((c) => { c.red = 0; c.heal = 0; });
+            this.towelShown = false;
             this.dirty = true;
         }
     });
