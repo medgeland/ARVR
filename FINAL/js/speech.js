@@ -27,16 +27,21 @@
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     function normalise(text) {
-        return (text || "").toLowerCase().replace(/[.,!?;:«»"']/g, " ").replace(/\s+/g, " ").trim();
+        return (text || "").toLowerCase().replace(/ё/g, "е").replace(/[.,!?;:«»"']/g, " ").replace(/\s+/g, " ").trim();
     }
 
     // returns {name, phrase} or null. Short phrases must match a whole word, longer ones a substring.
+    // "word*" = any word that starts with "word" (hurt* -> hurts, hurting; очк* -> очки, очков).
+    function phraseHit(t, p) {
+        if (p.slice(-1) === "*") return t.indexOf(" " + p.slice(0, -1)) !== -1;
+        return p.length <= 3 ? t.indexOf(" " + p + " ") !== -1 : t.indexOf(p) !== -1;
+    }
     function matchText(text, allowed) {
         const t = " " + normalise(text) + " ";
         for (const intent of INTENTS) {
             if (allowed && allowed.indexOf(intent.name) === -1) continue;
             for (const p of intent.phrases) {
-                const hit = p.length <= 3 ? t.indexOf(" " + p + " ") !== -1 : t.indexOf(p) !== -1;
+                const hit = phraseHit(t, p);
                 if (hit) return { name: intent.name, phrase: p };
             }
         }
