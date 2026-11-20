@@ -6,34 +6,90 @@
     <title>First Laser Visit – 240137</title>
     <link rel="icon" href="data:,">
     <style>
-        /* landing page: colours, font, sizes; cards wrap to one column on mobile web */
+        /* landing page: one indigo background, white cards, cards stack to one column on a phone */
+        :root {
+            --indigo: #283593;
+            --indigo-dark: #1a237e;
+            --ink: #1a1a2e;
+            --muted: #5c6070;
+            --orange: #ff9a3c;
+            --blue: #3f51b5;
+        }
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            padding: 24px 16px;
-            background: #283593;
+            min-height: 100vh;
+            padding: 40px 16px 32px;
+            background: linear-gradient(160deg, var(--indigo) 0%, var(--indigo-dark) 100%);
             color: #ffffff;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             font-size: 16px;
-            line-height: 1.4;
+            line-height: 1.5;
         }
-        main { max-width: 900px; margin: 0 auto; }
-        h1 { font-size: 30px; }
-        h2 { font-size: 18px; }
+        main { max-width: 960px; margin: 0 auto; }
         a { color: #ffffff; }
-        .cards { display: flex; flex-wrap: wrap; gap: 16px; }
-        .card {
-            flex: 1 1 260px;
-            display: block;
-            padding: 20px;
-            background: #ffffff;
-            color: #1a1a2e;
-            text-decoration: none;
+
+        /* header: title on the left, language switch on the right (below it on a phone) */
+        .top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+        h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.5px; }
+        .subtitle { margin: 0; max-width: 560px; font-size: 18px; opacity: 0.85; }
+        .lang { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); }
+        .lang-btn {
+            border: 0; border-radius: 999px; padding: 6px 16px;
+            background: transparent; color: #ffffff;
+            font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
         }
-        .card-title { display: block; font-size: 22px; font-weight: bold; margin-bottom: 8px; }
-        .card-line, .card-disclaimer, .card-go { display: block; margin-top: 8px; }
-        .card-disclaimer { background: #fff3c4; padding: 6px; }
-        .card-go { font-weight: bold; color: #283593; }
-        .lang-btn[aria-pressed="true"] { font-weight: bold; }
+        .lang-btn[aria-pressed="true"] { background: #ffffff; color: var(--indigo); }
+
+        /* mode cards */
+        .prompt { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; opacity: 0.75; }
+        .cards { display: flex; flex-wrap: wrap; gap: 20px; }
+        .card {
+            flex: 1 1 300px;
+            display: flex; flex-direction: column;
+            padding: 24px;
+            border-radius: 18px;
+            background: #ffffff;
+            color: var(--ink);
+            text-decoration: none;
+            box-shadow: 0 10px 30px rgba(10, 15, 60, 0.25);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(10, 15, 60, 0.35); }
+        .card:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+        .card-icon {
+            width: 56px; height: 56px; border-radius: 16px; margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-kid .card-icon { background: #fff1e3; color: #e07a1f; }
+        .card-trainer .card-icon { background: #e8eaf6; color: var(--blue); }
+        .card-tag { align-self: flex-start; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        .card-title { font-size: 23px; font-weight: 700; line-height: 1.25; }
+        .card-line { margin-top: 8px; color: var(--muted); }
+        .card-disclaimer {
+            margin-top: 14px; padding: 8px 12px; border-radius: 10px;
+            background: #fff6d6; color: #6b5300; font-size: 14px;
+        }
+        /* "Open" sits at the bottom of both cards, so the two line up */
+        .card-go {
+            margin-top: auto; padding-top: 20px;
+            font-weight: 700; color: var(--indigo);
+        }
+        .card-go span {
+            display: inline-block; padding: 10px 18px; border-radius: 999px;
+            background: var(--indigo); color: #ffffff;
+        }
+        .card-kid .card-go span { background: #e07a1f; }
+
+        /* device note + privacy: quieter, under the cards */
+        .info { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 28px; }
+        .info > * {
+            flex: 1 1 300px; margin: 0; padding: 16px 18px; border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08); font-size: 14px; opacity: 0.92;
+        }
+        .info h2 { margin: 0 0 6px; font-size: 15px; }
+        .info p { margin: 0; }
+        .foot { margin-top: 28px; font-size: 13px; opacity: 0.7; }
     </style>
     <script src="js/i18n.js"></script>
 </head>
@@ -50,33 +106,45 @@
                 <button type="button" class="lang-btn" data-lang="en">EN</button>
             </div>
         </header>
-        <!-- Two mode cards - home treatment / visit for kids -->
+        <!-- Two mode cards: links, so mouse, touch and Tab + Enter all work -->
+        <p class="prompt" data-i18n="cards.prompt"></p>
         <section class="cards">
             <a class="card card-kid" id="card-kid" href="kids.html">
+                <span class="card-icon" aria-hidden="true">
+                    <!-- smiling face (own drawing) -->
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8"/><circle cx="9" cy="10" r="0.6" fill="currentColor"/><circle cx="15" cy="10" r="0.6" fill="currentColor"/></svg>
+                </span>
+                <span class="card-tag" data-i18n="card.kid.tag"></span>
                 <span class="card-title" data-i18n="card.kid.title"></span>
                 <span class="card-line" data-i18n="card.kid.line"></span>
-                <span class="card-go" data-i18n="card.open"></span>
+                <span class="card-go"><span data-i18n="card.open"></span></span>
             </a>
             <a class="card card-trainer" id="card-trainer" href="trainer.html">
+                <span class="card-icon" aria-hidden="true">
+                    <!-- hand-held light device over the skin (own drawing) -->
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="6" rx="2"/><path d="M12 9v8M9 9.5l-2 7M15 9.5l2 7" stroke-dasharray="2 2"/><path d="M3 20h18"/></svg>
+                </span>
+                <span class="card-tag" data-i18n="card.trainer.tag"></span>
                 <span class="card-title" data-i18n="card.trainer.title"></span>
                 <span class="card-line" data-i18n="card.trainer.line"></span>
                 <!-- Training disclaimer -->
                 <span class="card-disclaimer" data-i18n="card.trainer.disclaimer"></span>
-                <span class="card-go" data-i18n="card.open"></span>
+                <span class="card-go"><span data-i18n="card.open"></span></span>
             </a>
         </section>
-         <!-- Device note -->
-        <p class="device-note" data-i18n="device.note"></p>
 
-        <!-- Privacy, shown before any mic prompt (mic is only requested inside a scene) -->
-        <section class="privacy" aria-labelledby="privacy-title">
-            <h2 id="privacy-title" data-i18n="privacy.title"></h2>
-            <p data-i18n="privacy.body"></p>
+        <!-- Device note + privacy (shown before any mic prompt; the mic is only requested inside a scene) -->
+        <section class="info">
+            <p class="device-note" data-i18n="device.note"></p>
+            <div class="privacy" aria-labelledby="privacy-title">
+                <h2 id="privacy-title" data-i18n="privacy.title"></h2>
+                <p data-i18n="privacy.body"></p>
+            </div>
         </section>
 
         <!-- Credits -->
         <footer class="foot">
-            <a href="https://github.com/medgeland/ARVR/FINAL/README.md" data-i18n="credits.link"></a>
+                        <a href="https://github.com/medgeland/ARVR/blob/main/FINAL/README.md" data-i18n="credits.link"></a>
             <span>· 240137</span>
         </footer>
     </main>
