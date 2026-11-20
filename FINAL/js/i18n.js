@@ -68,8 +68,8 @@
             "kids.help.small": "Oops, the white spot is peeking out. Try a bigger window.",
             "kids.help.right": "Yes! That window covers the whole spot.",
             "kids.help.shine": "Now point the light at the spot. Use the wheel or the Higher and Lower buttons until it says just right. Then hold the light on the spot.",
-            "kids.help.close": "It's getting a little warm. Lift the light up a bit.",
-            "kids.help.far": "A little closer, please.",
+            "kids.help.close": "It's getting a little warm. Lift the light up a bit: press Higher.",
+            "kids.help.far": "A little closer, please: press Lower, or scroll the mouse wheel down.",
             "kids.help.aim": "Point the light right at the white spot.",
             "kids.help.shining": "The light is on.",
             "kids.help.done": "Thank you! You did it, just like a real doctor's helper.",
@@ -166,7 +166,9 @@
             "trainer.tip.far": "You were too far {p}% of the time. Too far, the light is too weak: keep 4 cm.",
             "trainer.tip.short": "You held {t} s. The target is {target} s.",
             "trainer.tip.long": "You held {t} s, longer than {target} s. Too long burns the skin.",
-            "trainer.tip.burn": "The skin turned red: that means burn risk. Check the distance and the time."
+            "trainer.tip.burn.close": "The skin turned red: the device was closer than {cm} cm for {s} s. Keep the distance bar on Good the whole time.",
+            "trainer.tip.burn.long": "The skin turned red: the light stayed on {s} s longer than {max} s. Let go when the timer reaches 0:00.",
+            "trainer.tip.burn.edge": "The skin turned red around the spot: healthy skin got too much light. Use the smallest nozzle that covers the spot and keep it centred."
         },
         ru: {
             // landing
@@ -232,8 +234,8 @@
             "kids.help.small": "Ой, белое пятнышко выглядывает. Попробуй насадку побольше.",
             "kids.help.right": "Да! Эта насадка закрывает всё пятнышко.",
             "kids.help.shine": "Теперь наведи свет на пятнышко. Крути колёсико или нажимай «Выше» и «Ниже», пока не появится надпись «В самый раз». Потом зажми кнопку «Светить» и свети на пятнышко.",
-            "kids.help.close": "Становится жарковато. Подними свет чуть выше.",
-            "kids.help.far": "Чуть ближе, пожалуйста.",
+            "kids.help.close": "Становится жарковато. Подними свет чуть выше: нажми «Выше».",
+            "kids.help.far": "Чуть ближе, пожалуйста: нажми «Ниже» или покрути колёсико мыши вниз.",
             "kids.help.aim": "Наведи свет прямо на белое пятнышко.",
             "kids.help.shining": "Свет включён.",
             "kids.help.done": "Спасибо! Ты настоящий помощник доктора.",
@@ -330,7 +332,9 @@
             "trainer.tip.far": "{p}% времени аппарат был слишком далеко. Так свет действует слишком слабо: держите 4 см.",
             "trainer.tip.short": "Вы держали {t} с, а нужно {target} с.",
             "trainer.tip.long": "Вы держали {t} с, дольше нужных {target} с. Слишком долгое облучение вызывает ожог.",
-            "trainer.tip.burn": "Кожа покраснела — это риск ожога. Проверьте расстояние и время."
+            "trainer.tip.burn.close": "Кожа покраснела: аппарат был ближе {cm} см в течение {s} с. Держите шкалу расстояния на «Норма» всё время.",
+            "trainer.tip.burn.long": "Кожа покраснела: свет горел на {s} с дольше, чем {max} с. Отпустите, когда таймер дойдёт до 0:00.",
+            "trainer.tip.burn.edge": "Кожа вокруг пятна покраснела: здоровая кожа получила слишком много света. Возьмите самую маленькую насадку, которая закрывает пятно, и держите её по центру."
         }
     };
 
