@@ -723,9 +723,16 @@
             this.framed = atTable;
             const cam = document.getElementById("cam");
             const lc = cam && cam.components["look-controls"];
-            cam.setAttribute("camera", "fov", atTable ? 60 : 80);
+            // at the table: above it, looking down on the flat arm and the tray, so the skin faces the camera.
+            // A wide screen gets a narrower fov (bigger arm); a tall phone screen needs 60 to fit the tray.
+            const wide = window.innerWidth >= window.innerHeight;
+            cam.setAttribute("camera", "fov", atTable ? (wide ? 40 : 60) : 80);
+            // back to the seat, in case the user walked away with WASD (and drop any leftover glide)
+            const walk = cam.components["wasd-controls"];
+            if (walk && walk.velocity) walk.velocity.set(0, 0, 0);
+            cam.setAttribute("position", atTable ? "0.08 1.78 -0.36" : "0 1.2 0");   // rig is at z 1.5
             if (lc && lc.pitchObject) {
-                lc.pitchObject.rotation.x = atTable ? -0.21 : 0;
+                lc.pitchObject.rotation.x = atTable ? (wide ? -1.14 : -1.2) : 0;
                 lc.yawObject.rotation.y = 0;
             }
         },
@@ -821,7 +828,7 @@
         showDone: function () {
             this.putGoggles(false);
             if (this.kidSkin) { this.kidSkin.cells.forEach((c) => { c.red = 0; }); this.kidSkin.dirty = true; }
-            if (this.towel) this.towel.object3D.visible = false;   // the cloth comes off, so the spot is easy to see
+            if (this.kidSkin) this.kidSkin.showTowel(false);   // the cloth comes off, so the spot is easy to see
             this.buildParentCard();
             this.playTimelapse();
             this.sayAll(["kids.timelapse"]);
