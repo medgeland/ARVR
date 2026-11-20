@@ -160,16 +160,18 @@
 
         <!-- state: done: medal + "Visit 3 of 6" left of the table (the parent card sits top right); patch on the forearm fills in -->
         <a-entity x0137-state-group="done" visible="false">
-            <a-entity id="kids-medal" position="-0.5 1.33 0.55"
-                      animation="property: rotation; from: 0 -12 0; to: 0 12 0; dir: alternate; loop: true; dur: 2200; easing: easeInOutSine">
+            <a-entity position="-0.02 1.0 0.86" rotation="-66 0 0" scale="0.55 0.55 0.55">
+                <a-entity id="kids-medal" position="-0.2 0.06 0"
+                animation="property: rotation; from: 0 -12 0; to: 0 12 0; dir: alternate; loop: true; dur: 2200; easing: easeInOutSine">
                 <a-box width="0.04" height="0.12" depth="0.006" position="-0.028 0.095 0" rotation="0 0 -18" color="#283593"></a-box>
                 <a-box width="0.04" height="0.12" depth="0.006" position="0.028 0.095 0" rotation="0 0 18" color="#283593"></a-box>
                 <a-cylinder radius="0.07" height="0.016" rotation="90 0 0" color="#f9a825"></a-cylinder>
                 <a-cylinder radius="0.05" height="0.018" rotation="90 0 0" color="#ffd54f"></a-cylinder>
             </a-entity>
             <!-- canvas label, so Russian works -->
-            <a-entity id="kids-done-label" position="-0.5 1.17 0.55"
+            <a-entity id="kids-done-label" position="0.16 0.06 0"
                       x0137-label="width: 0.42; color: #ffffff; background: #283593; fontSize: 90"></a-entity>
+        </a-entity>
         </a-entity>
     </a-scene>
 </body>
