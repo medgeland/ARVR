@@ -36,8 +36,8 @@
         <!-- camera: seated close to table, looking down at the arm.
              fov 50 on desktop makes the 3 mm skin blocks readable, headset ignores it. -->
         <!-- W A S D / arrows: walk slowly around the table to look at the spot from the side -->
-        <a-entity id="rig" position="0 0 0.18" wasd-controls="acceleration: 6; fly: false">
-            <a-entity id="cam" camera="fov: 50" look-controls position="0 1.25 0">
+        <a-entity id="rig" position="0 0 0.18">
+            <a-entity id="cam" camera="fov: 50" look-controls wasd-controls="acceleration: 6; fly: false" position="0 1.25 0">
                 <a-entity id="x0137-vr-subtitle" position="0 -0.32 -0.95" visible="false"
                            x0137-label="width: 1.2; color: #ffffff; background: rgba(40,53,147,0.9); fontSize: 48"></a-entity>
             </a-entity>
