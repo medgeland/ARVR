@@ -18,7 +18,7 @@
     // "Your turn" settings (placeholders for Dr Smirnova, like the Trainer's CONFIG)
     const HELPER = {
         lesion: { id: "h1", type: "vitiligo", diameterMm: 20, along: 0.5, across: 0 },
-        moles: [{ along: 0.18, across: 0.02 }, { along: 0.8, across: -0.016 }],
+        moles: [{ along: 0.18, across: -0.02 }, { along: 0.8, across: -0.016 }],
         towelHoleMm: 36,
         windows: [{ id: "w8", mm: 8 }, { id: "w16", mm: 16 }, { id: "w24", mm: 24 }],
         distanceCm: { target: 4, tol: 1 }, // kinder band than the Trainer's
@@ -267,6 +267,12 @@
                     return this.kidSkin.addMole(q.x, q.z, (e) => {
                         e.setAttribute("x0137-explorable", "name: mole:" + i);
                         e.setAttribute("color", "#4a2e20");
+                        // a bit bigger and taller than the Trainer's, so it shows above the skin from the seat
+                        const c = this.kidSkin.cellAt(q.x, q.z);
+                        e.setAttribute("width", 0.014);
+                        e.setAttribute("depth", 0.014);
+                        e.setAttribute("height", 0.006);
+                        e.setAttribute("position", { x: c.x, y: this.kidSkin.topAt(c.x, c.z) + 0.003, z: c.z });
                     });
                 }).filter(Boolean);
                 this.buildTowel();
@@ -333,6 +339,8 @@
             // desktop / touch: hold the mouse or finger on the spot
             skinEl.addEventListener("mousedown", () => {
                 if (this.state !== "helper" || this.el.is("vr-mode")) return;
+                const mouseRc = this.el.components.raycaster;
+                if (this.coverMoleNear(mouseRc && mouseRc.getIntersection(skinEl))) return;
                 this.pointerDown = true;
                 this.aimFromPointer();
                 this.startShine("pointer");
@@ -359,7 +367,9 @@
                 hand.addEventListener("triggerdown", () => {
                     const rc = hand.components.raycaster;
                     const first = rc && rc.intersections && rc.intersections[0];
-                    if (this.state === "helper" && first && this.kidSkin && first.object === this.kidSkin.mesh) this.startShine("trigger");
+                    if (this.state !== "helper" || !first || !this.kidSkin || first.object !== this.kidSkin.mesh) return;
+                    if (this.coverMoleNear(first)) return;
+                    this.startShine("trigger");
                 });
                 hand.addEventListener("triggerup", () => { if (this.shineSource === "trigger") this.stopShine(); });
                 hand.addEventListener("thumbstickmoved", (e) => { this.stickY = e.detail.y || 0; });
@@ -370,6 +380,22 @@
                 hand.addEventListener("abuttondown", down);
                 hand.addEventListener("xbuttondown", down);
             });
+        },
+
+        // sunscreen step: a click on the skin within 2.5 cm of an uncovered mole covers that mole.
+        // The mole blocks are small, so the skin around them counts too
+        coverMoleNear: function (hit) {
+            if (!hit || this.helperStep !== "cream" || !this.moles) return false;
+            const p = this.kidArm.object3D.worldToLocal(hit.point.clone());
+            let best = -1, bestD = 0.025;
+            this.moles.forEach((m, i) => {
+                if (m.dataset.covered) return;
+                const d = Math.hypot(m.object3D.position.x - p.x, m.object3D.position.z - p.z);
+                if (d < bestD) { bestD = d; best = i; }
+            });
+            if (best === -1) return false;
+            this.coverMole(best);
+            return true;
         },
 
         resetHelper: function () {
